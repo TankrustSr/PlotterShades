@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>VectorK1 - Pen Plotter & LightBurn Studio</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #08090c;
+      width: 100%;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #e2e8f0;
+      touch-action: none;
+    }
+    #viewport-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, #11141c 0%, #06070a 100%);
+    }
+    canvas#glcanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+    }
+    canvas#vectorPreviewCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 2;
+      pointer-events: none;
+    }
+    #ui-container {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 10;
+      width: 360px;
+      max-height: calc(100vh - 28px);
+      pointer-events: none;
+    }
+    .panel {
+      pointer-events: auto;
+      background: rgba(14, 17, 24, 0.94);
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.6);
+    }
+    #hud {
+      font-size: 11px;
+      line-height: 1.5;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    #hud span.hl {
+      color: #38bdf8;
+      font-weight: 600;
+    }
+    #drawer {
+      max-height: 60vh;
+      overflow-y: auto;
+      padding-right: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #drawer::-webkit-scrollbar {
+      width: 4px;
+    }
+    #drawer::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94a3b8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .sub-heading {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #f59e0b;
+      margin: 6px 0 2px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 2px;
+    }
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5px;
+      color: rgba(255, 255, 255, 0.75);
+    }
+    .slider-header span.val {
+      color: #38bdf8;
+      font-weight: 600;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.16);
+      outline: none;
+      margin: 4px 0;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #f8fafc;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.6);
+      cursor: pointer;
+    }
+
+    button {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.1);
+      color: #f8fafc;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      transition: background 0.15s, transform 0.08s;
+      outline: none;
+    }
+    button:active {
+      transform: scale(0.97);
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    select {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      background-color: #171a24;
+      color: #f8fafc;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 24px 6px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%2394a3b8' d='M0 0l5 5 5-5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+    }
+    select:focus {
+      border-color: #38bdf8;
+    }
+    select option {
+      background-color: #12151e;
+      color: #f8fafc;
+      padding: 6px 10px;
+    }
+
+    .btn-primary {
+      background: rgba(14, 165, 233, 0.3) !important;
+      border-color: #38bdf8 !important;
+      color: #38bdf8 !important;
+    }
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      pointer-events: auto;
+    }
+    .layer-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .layer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .layer-title-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    input[type="color"] {
+      -webkit-appearance: none;
+      appearance: none;
+      border: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      cursor: pointer;
+      background: transparent;
+      padding: 0;
+    }
+    input[type="color"]::-webkit-color-swatch {
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="viewport-container">
+    <canvas id="glcanvas"></canvas>
+    <canvas id="vectorPreviewCanvas"></canvas>
+  </div>
+
+  <div id="ui-container">
+    <div id="hud" class="panel">
+      <div>Engine: <span class="hl" id="hud-engine">Sacred Chamber</span> | Mode: <span class="hl" id="hud-view">Hybrid</span></div>
+      <div>Plotted Nodes: <span class="hl" id="hud-nodes">0</span> | Spline Paths: <span class="hl" id="hud-paths">0</span></div>
+      <div>Pen Travel: <span class="hl" id="hud-dist">0.00 m</span> | Air Travel: <span class="hl" id="hud-air">0.00 m</span></div>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">
+        <span>Plotter Studio Controls</span>
+        <button id="toggleDrawerBtn" style="padding: 2px 8px; font-size: 10px;">Hide</button>
+      </div>
+
+      <div id="drawer">
+        <div class="sub-heading">Display & Canvas Bed</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+          <select id="sl-view-mode">
+            <option value="overlay" selected>Hybrid (Shader + Lines)</option>
+            <option value="vector">White Paper Plotter</option>
+            <option value="blueprint">Dark Blueprint Plotter</option>
+            <option value="shader">Shader Only</option>
+          </select>
+          <select id="sl-bed-size">
+            <option value="200,200">200 × 200 mm (Square)</option>
+            <option value="297,210" selected>A4 Landscape (297×210)</option>
+            <option value="420,297">A3 Landscape (420×297)</option>
+            <option value="300,300">LightBurn 300×300 mm</option>
+          </select>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+          <span style="font-size:10.5px; color:rgba(255,255,255,0.75);">Vector Toolpath Mode</span>
+          <select id="sl-export-mode" style="width:160px;">
+            <option value="both" selected>⚡ Both (Fills + Lines)</option>
+            <option value="strokes">🖋️ Lines (Pen / Score)</option>
+            <option value="fills">🔥 Fills (Laser Engrave)</option>
+          </select>
+        </div>
+
+        <!-- Smoothness & Quality Controls -->
+        <div class="sub-heading">Contour Smoothness & Splining</div>
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Bézier Spline Smoothness</span>
+            <span id="smooth-num" class="val">4 Passes</span>
+          </div>
+          <input type="range" id="sl-smoothness" min="0" max="8" step="1" value="4">
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>16-Bit Scalar Pre-Filter</span>
+            <span id="blur-num" class="val">2 Passes</span>
+          </div>
+          <input type="range" id="sl-blur" min="0" max="5" step="1" value="2">
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Global Line Density</span>
+            <span id="density-num" class="val">22 Strata</span>
+          </div>
+          <input type="range" id="sl-density" min="6" max="48" step="1" value="22">
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Pen Width (LightBurn Stroke)</span>
+            <span id="width-num" class="val">0.35 mm</span>
+          </div>
+          <input type="range" id="sl-stroke-width" min="0.10" max="2.00" step="0.05" value="0.35">
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Node Decimation Filter</span>
+            <span id="rdp-num" class="val">0.25</span>
+          </div>
+          <input type="range" id="sl-rdp" min="0.05" max="1.50" step="0.05" value="0.25">
+        </div>
+
+        <!-- LightBurn Multi-Layer Matrix -->
+        <div class="sub-heading">LightBurn Layer Channels</div>
+        <div id="layers-container" style="display:flex; flex-direction:column; gap:6px;"></div>
+
+        <!-- Shader Displacements -->
+        <div class="sub-heading">Shader Engine & Displacements</div>
+        <select id="engineSelect">
+          <option value="8" selected>💎 Sacred Chamber (Rhombille Diamonds & Filigree)</option>
+          <option value="0">🌊 Laminar Silk (Domain Warped fBm)</option>
+          <option value="1">🔮 Agate Geode (Cellular Voronoi)</option>
+          <option value="2">🌀 Curl Nebula (Vortex Filaments)</option>
+          <option value="3">🫧 Gyroid Cymatics (Resonance Wave)</option>
+          <option value="4">⬡ Hexagonal Hive (Honeycomb)</option>
+          <option value="5">⊞ Hypercube Lattice</option>
+          <option value="7">⚡ 80s Synthwave Grid</option>
+        </select>
+
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Pattern Flow Direction</span>
+            <span id="flow-angle-num" class="val">0°</span>
+          </div>
+          <input type="range" id="sl-flow-angle" min="-180" max="180" step="1" value="0">
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Displacement Turbulence</span>
+            <span id="warp-num" class="val">0.90</span>
+          </div>
+          <input type="range" id="sl-warp" min="0.0" max="3.5" step="0.05" value="0.90">
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>3D Ground Plane Tilt</span>
+            <span id="tilt-num" class="val">0°</span>
+          </div>
+          <input type="range" id="sl-tilt" min="0" max="62" step="1" value="0">
+        </div>
+
+        <!-- Kaleidoscope Corridor -->
+        <div class="sub-heading">Kaleidoscope Corridor</div>
+        <div style="margin-bottom: 4px;">
+          <select id="sl-k-mode" style="width: 100%;">
+            <option value="1" selected>Mirror Symmetry (Corner Vanishing Point)</option>
+            <option value="0">Repeat Symmetry (Pinwheel)</option>
+          </select>
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Petal Count (Odd or Even)</span>
+            <span id="ksegs-num" class="val">6 Petals</span>
+          </div>
+          <input type="range" id="sl-k-segs" min="1" max="24" step="1" value="6">
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Chamber Orientation</span>
+            <span id="kangle-num" class="val">30°</span>
+          </div>
+          <input type="range" id="sl-k-angle" min="0" max="360" step="1" value="30">
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Perspective Pinch</span>
+            <span id="kpinch-num" class="val">1.00</span>
+          </div>
+          <input type="range" id="sl-k-pinch" min="0.40" max="2.50" step="0.05" value="1.00">
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Aperture Zoom</span>
+            <span id="kzoom-num" class="val">1.00</span>
+          </div>
+          <input type="range" id="sl-k-zoom" min="0.30" max="3.00" step="0.05" value="1.00">
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button id="clearPaintBtn">✨ Clear Ripple Canvas</button>
+      <button id="refreshPlotBtn" class="btn-primary">⚡ Trace Plotter Lines</button>
+      <button id="exportSvgBtn" class="btn-primary" style="background: rgba(34, 197, 94, 0.25) !important; border-color: #22c55e !important; color: #4ade80 !important;">
+        🖋️ Export LightBurn SVG
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. LIGHTBURN PALETTE CONFIGURATION & MULTI-LAYER STATE
+    // =========================================================================
+    let layersState = [
+      { id: 'Shadows_Base',      enabled: true, color: '#000000', lbCode: 'C00', minElev: 0.08, maxElev: 0.38 },
+      { id: 'Mid_Strata',        enabled: true, color: '#0000ff', lbCode: 'C01', minElev: 0.38, maxElev: 0.72 },
+      { id: 'High_Crests_Lace',  enabled: true, color: '#ff0000', lbCode: 'C02', minElev: 0.72, maxElev: 0.98 }
+    ];
+
+    function renderLayerUI() {
+      const container = document.getElementById('layers-container');
+      container.innerHTML = '';
+      layersState.forEach((layer, idx) => {
+        const card = document.createElement('div');
+        card.className = 'layer-card';
+        card.innerHTML = `
+          <div class="layer-header">
+            <div class="layer-title-box">
+              <input type="checkbox" id="chk-layer-${idx}" ${layer.enabled ? 'checked' : ''}>
+              <span>${layer.lbCode} : ${layer.id}</span>
+            </div>
+            <input type="color" id="col-layer-${idx}" value="${layer.color}">
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:10px; color:#94a3b8;">
+            <span>Elev: ${(layer.minElev * 100).toFixed(0)}% → ${(layer.maxElev * 100).toFixed(0)}%</span>
+            <span>Stroke: <span id="layer-stroke-val-${idx}">${document.getElementById('sl-stroke-width').value}mm</span></span>
+          </div>
+        `;
+        container.appendChild(card);
+
+        card.querySelector(`#chk-layer-${idx}`).addEventListener('change', (e) => {
+          layer.enabled = e.target.checked;
+          scheduleVectorTrace();
+        });
+        card.querySelector(`#col-layer-${idx}`).addEventListener('input', (e) => {
+          layer.color = e.target.value;
+          drawVectorPreview();
+        });
+      });
+    }
+
+    // =========================================================================
+    // 2. SHADER ENGINE WITH 16-BIT ENCODING FOR SMOOTH EXTRACTION
+    // =========================================================================
+    const glCanvas = document.getElementById('glcanvas');
+    const gl = glCanvas.getContext('webgl2', { preserveDrawingBuffer: true }) || glCanvas.getContext('webgl', { preserveDrawingBuffer: true });
+
+    const quadVS = `
+      attribute vec2 a_position;
+      varying vec2 v_uv;
+      void main() {
+        v_uv = (a_position + 1.0) * 0.5;
+        gl_Position = vec4(a_position, 0.0, 1.0);
+      }
+    `;
+
+    const simFS = `
+      precision highp float;
+      varying vec2 v_uv;
+      uniform sampler2D u_prevBuffer;
+      uniform vec2 u_resolution;
+      uniform vec2 u_mouse;
+      uniform vec2 u_mouse_vel;
+      uniform float u_pressure;
+      uniform float u_persistence;
+
+      uniform float u_k_segs;
+      uniform float u_k_angle;
+      uniform float u_k_mirror;
+
+      vec2 foldPoint(vec2 p, float segs, float angleOffset, float isMirror) {
+        if (segs <= 1.5) return p;
+        float r = length(p);
+        float a = atan(p.y, p.x + 1e-5) + angleOffset;
+        float segAngle = 6.28318530718 / segs;
+        float modA = mod(a, segAngle);
+        if (modA < 0.0) modA += segAngle;
+        float H = segAngle * 0.5;
+        float foldA = (isMirror > 0.5) ? abs(modA - H) : modA;
+        return vec2(cos(foldA - angleOffset), sin(foldA - angleOffset)) * r;
+      }
+
+      void main() {
+        vec2 st = (gl_FragCoord.xy * 2.0 - u_resolution) / min(u_resolution.x, u_resolution.y);
+        vec2 impulse = vec2(0.0);
+
+        if (u_pressure > 0.01) {
+          vec2 f_st = foldPoint(st, u_k_segs, u_k_angle, u_k_mirror);
+          vec2 f_mouse = foldPoint(u_mouse, u_k_segs, u_k_angle, u_k_mirror);
+          vec2 f_prev = foldPoint(u_mouse - u_mouse_vel, u_k_segs, u_k_angle, u_k_mirror);
+          vec2 f_vel = f_mouse - f_prev;
+
+          vec2 toMouse = f_st - f_mouse;
+          float d = length(toMouse);
+          float f = exp(-d * 3.5) * u_pressure;
+          impulse += f_vel * f * 1.5;
+          impulse += vec2(-toMouse.y, toMouse.x) / (d + 0.1) * f * 0.8;
+        }
+
+        vec2 uvDelta = impulse * 0.006;
+        vec2 prev = texture2D(u_prevBuffer, clamp(v_uv - uvDelta, 0.001, 0.999)).xy;
+        gl_FragColor = vec4((prev + impulse * 0.25) * u_persistence, 0.0, 1.0);
+      }
+    `;
+
+    const displayFS = `
+      precision highp float;
+      varying vec2 v_uv;
+      uniform sampler2D u_simTexture;
+      uniform vec2 u_resolution;
+      uniform float u_time;
+      uniform float u_shader_type;
+      uniform float u_warp_scale;
+      uniform float u_plane_tilt;
+      uniform float u_flow_angle;
+      uniform float u_k_segs;
+      uniform float u_k_angle;
+      uniform float u_k_pinch;
+      uniform float u_k_zoom;
+      uniform float u_k_mirror;
+      uniform float u_encode_16bit;
+
+      vec2 hash(vec2 p) {
+        p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+        return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
+      }
+
+      float noise(vec2 p) {
+        const float K1 = 0.366025404;
+        const float K2 = 0.211324865;
+        vec2 i = floor(p + (p.x + p.y) * K1);
+        vec2 a = p - i + (i.x + i.y) * K2;
+        vec2 o = (a.x > a.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+        vec2 b = a - o + K2;
+        vec2 c = a - 1.0 + 2.0 * K2;
+        vec3 h = max(0.5 - vec3(dot(a, a), dot(b, b), dot(c, c)), 0.0);
+        vec3 n = h * h * h * h * vec3(dot(a, hash(i + 0.0)), dot(b, hash(i + o)), dot(c, hash(i + 1.0)));
+        return dot(n, vec3(70.0));
+      }
+
+      float fbm(vec2 p) {
+        float f = 0.0;
+        float amp = 0.5;
+        const mat2 rot = mat2(0.96, 0.26, -0.26, 0.96);
+        for (int i = 0; i < 4; i++) {
+          f += amp * noise(p);
+          p = rot * p * 1.85;
+          amp *= 0.5;
+        }
+        return f;
+      }
+
+      vec3 rhombilleDiamonds(vec2 p) {
+        vec2 s = vec2(1.7320508, 1.0);
+        vec2 a = mod(p, s) - s * 0.5;
+        vec2 b = mod(p - s * 0.5, s) - s * 0.5;
+        vec2 g = dot(a, a) < dot(b, b) ? a : b;
+        float angle = atan(g.y, g.x + 1e-5) + 3.14159265;
+        float sector = floor(mod(angle / 1.04719755, 6.0));
+        float facetID = mod(sector, 3.0);
+        vec2 diamondUV = abs(g);
+        float dEdge = max(diamondUV.x * 0.5 + diamondUV.y * 0.866025, diamondUV.x);
+        return vec3(facetID, 1.0 - smoothstep(0.44, 0.49, dEdge), dEdge);
+      }
+
+      void main() {
+        vec2 raw_st = (gl_FragCoord.xy * 2.0 - u_resolution) / min(u_resolution.x, u_resolution.y);
+
+        float cosT = cos(u_plane_tilt);
+        float W = 1.0 - (tan(u_plane_tilt) / 1.7) * raw_st.y;
+        vec2 st = (u_plane_tilt > 0.005 && W > 0.08) ? vec2(raw_st.x / W, raw_st.y / (W * cosT)) : raw_st;
+
+        if (u_k_segs > 1.5) {
+          float r = length(st);
+          float a = atan(st.y, st.x + 1e-5) + u_k_angle;
+          float segAngle = 6.28318530718 / u_k_segs;
+          float modA = mod(a, segAngle);
+          if (modA < 0.0) modA += segAngle;
+          float H = segAngle * 0.5;
+          float foldA = (u_k_mirror > 0.5) ? abs(modA - H) : modA;
+
+          float rP = pow(max(r, 0.0001), u_k_pinch) * u_k_zoom;
+          st = vec2(cos(foldA), sin(foldA)) * rP;
+
+          vec2 foldedScreenST = vec2(cos(foldA - u_k_angle), sin(foldA - u_k_angle)) * r;
+          vec2 simUV = (foldedScreenST * min(u_resolution.x, u_resolution.y) + u_resolution) / (2.0 * u_resolution);
+          vec2 paint = texture2D(u_simTexture, clamp(simUV, 0.001, 0.999)).xy;
+          st += paint * 0.8;
+        } else {
+          float r = length(st);
+          if (abs(u_k_pinch - 1.0) > 0.005 || abs(u_k_zoom - 1.0) > 0.005) {
+            float a = atan(st.y, st.x + 1e-5);
+            float rP = pow(max(r, 0.0001), u_k_pinch) * u_k_zoom;
+            st = vec2(cos(a), sin(a)) * rP;
+          }
+          vec2 paint = texture2D(u_simTexture, v_uv).xy;
+          st += paint * 0.8;
+        }
+
+        float rad = u_flow_angle;
+        mat2 rotFlow = mat2(cos(rad), sin(rad), -sin(rad), cos(rad));
+        vec2 p = rotFlow * (st * 1.5);
+
+        float f = 0.0;
+
+        if (u_shader_type < 0.5) {
+          vec2 q = vec2(fbm(p + vec2(0.0, u_time * 0.05)), fbm(p + vec2(5.2, 1.3)));
+          vec2 r = vec2(fbm(p + 1.2 * q + vec2(1.7, 9.2)), fbm(p + 1.2 * q + vec2(8.3, 2.8)));
+          f = fbm(p + u_warp_scale * r);
+        } else if (u_shader_type < 1.5) {
+          vec2 g = fract(p * 2.0) - 0.5;
+          f = length(g) + 0.3 * fbm(p * 2.5);
+        } else if (u_shader_type < 2.5) {
+          vec2 c = vec2(fbm(p * 1.2 + vec2(0.0, u_time * 0.1)), fbm(p * 1.2 + vec2(4.1, 2.8)));
+          f = fbm(p + u_warp_scale * c);
+        } else if (u_shader_type < 3.5) {
+          vec2 gp = p * 3.0;
+          float gVal = sin(gp.x) * cos(gp.y) + sin(gp.y);
+          f = 0.5 + 0.5 * gVal + 0.2 * fbm(p * 2.0);
+        } else if (u_shader_type < 4.5) {
+          vec2 hp = p * 3.5;
+          vec2 hg = abs(fract(hp) - 0.5);
+          f = max(hg.x * 0.866 + hg.y * 0.5, hg.y) + 0.2 * fbm(p * 2.0);
+        } else if (u_shader_type < 5.5) {
+          vec2 sp = abs(fract(p * 3.5) - 0.5);
+          f = max(sp.x, sp.y) + 0.25 * fbm(p * 2.0);
+        } else if (u_shader_type < 7.5) {
+          vec2 grid = abs(fract(p * 4.0) - 0.5);
+          f = max(1.0 - smoothstep(0.0, 0.08, grid.x), 1.0 - smoothstep(0.0, 0.08, grid.y)) + 0.2 * fbm(p);
+        } else {
+          float radDist = length(p);
+          float polar = atan(p.y, p.x + 1e-5);
+          vec2 kDist = vec2(fbm(p * 1.8), fbm(p * 1.8 + vec2(3.1, 1.7))) * (u_warp_scale * 0.25);
+          vec3 rBlocks = rhombilleDiamonds((p + kDist) * 3.5);
+          float facet = (rBlocks.x < 0.5) ? 0.9 : ((rBlocks.x < 1.5) ? 0.6 : 0.3);
+          float filigree = abs(sin(radDist * 18.0 + sin(polar * 8.0) * 0.5));
+          f = mix(filigree, facet + rBlocks.y * 0.4, 0.65);
+        }
+
+        float lum = clamp(f * 0.5 + 0.5, 0.0, 1.0);
+
+        if (u_encode_16bit > 0.5) {
+          float v = lum * 65535.0;
+          float hi = floor(v / 256.0);
+          float lo = floor(mod(v, 256.0));
+          gl_FragColor = vec4(hi / 255.0, lo / 255.0, 0.0, 1.0);
+        } else {
+          gl_FragColor = vec4(vec3(lum), 1.0);
+        }
+      }
+    `;
+
+    function compile(src, type) {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      return s;
+    }
+    function makeProgram(vs, fs) {
+      const p = gl.createProgram();
+      gl.attachShader(p, compile(vs, gl.VERTEX_SHADER));
+      gl.attachShader(p, compile(fs, gl.FRAGMENT_SHADER));
+      gl.linkProgram(p);
+      return p;
+    }
+
+    const simProg = makeProgram(quadVS, simFS);
+    const dispProg = makeProgram(quadVS, displayFS);
+
+    const quadBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+
+    let simWidth = 512, simHeight = 512;
+    let fboA = gl.createFramebuffer(), fboB = gl.createFramebuffer();
+    let texA = gl.createTexture(), texB = gl.createTexture();
+
+    function initTex(t) {
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    }
+    initTex(texA); initTex(texB);
+
+    function allocFBOs(w, h) {
+      simWidth = w; simHeight = h;
+      [ {f:fboA, t:texA}, {f:fboB, t:texB} ].forEach(pair => {
+        gl.bindTexture(gl.TEXTURE_2D, pair.t);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, pair.f);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, pair.t, 0);
+        gl.clearColor(0,0,0,1); gl.clear(gl.COLOR_BUFFER_BIT);
+      });
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+    allocFBOs(simWidth, simHeight);
+
+    let readFBO = { fbo: fboA, tex: texA }, writeFBO = { fbo: fboB, tex: texB };
+    function swapFBO() { const t = readFBO; readFBO = writeFBO; writeFBO = t; }
+
+    // Dedicated 16-Bit Extraction Framebuffer (Eliminates nearest-neighbor aliasing)
+    let traceW = 560, traceH = 560;
+    const traceFBO = gl.createFramebuffer();
+    const traceTex = gl.createTexture();
+    initTex(traceTex);
+    gl.bindTexture(gl.TEXTURE_2D, traceTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, traceW, traceH, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, traceFBO);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, traceTex, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    let mouse = { x: 0, y: 0, vx: 0, vy: 0, p: 0, down: false };
+    window.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('#ui-container')) return;
+      mouse.down = true;
+      mouse.p = 0.8;
+      updatePointer(e);
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (!mouse.down) return;
+      updatePointer(e);
+    });
+    window.addEventListener('pointerup', () => { mouse.down = false; mouse.p = 0; scheduleVectorTrace(); });
+    function updatePointer(e) {
+      const minDim = Math.min(window.innerWidth, window.innerHeight);
+      const nx = (e.clientX * 2.0 - window.innerWidth) / minDim;
+      const ny = ((window.innerHeight - e.clientY) * 2.0 - window.innerHeight) / minDim;
+      mouse.vx = nx - mouse.x;
+      mouse.vy = ny - mouse.y;
+      mouse.x = nx;
+      mouse.y = ny;
+    }
+
+    document.getElementById('clearPaintBtn').addEventListener('click', () => {
+      allocFBOs(simWidth, simHeight);
+      scheduleVectorTrace();
+    });
+
+    // =========================================================================
+    // 3. TOPOLOGICAL MARCHING SQUARES & CUBIC BÉZIER SPLINING
+    // =========================================================================
+    const vCanvas = document.getElementById('vectorPreviewCanvas');
+    const vCtx = vCanvas.getContext('2d');
+    let extractedVectorLayers = [];
+
+    function resize() {
+      glCanvas.width = window.innerWidth;
+      glCanvas.height = window.innerHeight;
+      vCanvas.width = window.innerWidth;
+      vCanvas.height = window.innerHeight;
+      drawVectorPreview();
+    }
+    window.addEventListener('resize', resize);
+
+    // Continuous 2D Gaussian filter operating on high-precision float values
+    function blurScalarGrid(grid, w, h, passes = 2) {
+      if (passes <= 0) return;
+      const temp = new Float32Array(w * h);
+      for (let p = 0; p < passes; p++) {
+        for (let y = 0; y < h; y++) {
+          const row = y * w;
+          for (let x = 0; x < w; x++) {
+            const x0 = Math.max(0, x - 1);
+            const x2 = Math.min(w - 1, x + 1);
+            temp[row + x] = grid[row + x0] * 0.25 + grid[row + x] * 0.5 + grid[row + x2] * 0.25;
+          }
+        }
+        for (let y = 0; y < h; y++) {
+          const y0 = Math.max(0, y - 1) * w;
+          const y1 = y * w;
+          const y2 = Math.min(h - 1, y + 1) * w;
+          for (let x = 0; x < w; x++) {
+            grid[y1 + x] = temp[y0 + x] * 0.25 + temp[y1 + x] * 0.5 + temp[y2 + x] * 0.25;
+          }
+        }
+      }
+    }
+
+    // Weighted vertex smoother
+    function smoothPolyline(pts, passes, isClosed) {
+      if (pts.length < 3 || passes <= 0) return pts;
+      let cur = pts;
+      for (let p = 0; p < passes; p++) {
+        const len = cur.length;
+        const next = new Array(len);
+        for (let i = 0; i < len; i++) {
+          if (!isClosed && (i === 0 || i === len - 1)) {
+            next[i] = cur[i];
+            continue;
+          }
+          const prev = cur[(i - 1 + len) % len];
+          const curr = cur[i];
+          const fwd  = cur[(i + 1) % len];
+          next[i] = {
+            x: prev.x * 0.25 + curr.x * 0.5 + fwd.x * 0.25,
+            y: prev.y * 0.25 + curr.y * 0.5 + fwd.y * 0.25
+          };
+        }
+        cur = next;
+      }
+      return cur;
+    }
+
+    // Gentle collinear node decimation (does not clip subtle curvature)
+    function rdpPreFilter(pts, epsilon) {
+      if (pts.length <= 2 || epsilon <= 0.001) return pts;
+      const keep = new Uint8Array(pts.length);
+      keep[0] = 1;
+      keep[pts.length - 1] = 1;
+      const epsSq = epsilon * epsilon;
+
+      const stack = [[0, pts.length - 1]];
+      while (stack.length > 0) {
+        const [start, end] = stack.pop();
+        let maxDistSq = 0;
+        let maxIdx = start;
+
+        const p1 = pts[start];
+        const p2 = pts[end];
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const lenSq = dx * dx + dy * dy;
+
+        for (let i = start + 1; i < end; i++) {
+          const p = pts[i];
+          let distSq = 0;
+          if (lenSq === 0) {
+            distSq = (p.x - p1.x) ** 2 + (p.y - p1.y) ** 2;
+          } else {
+            const num = (dy * p.x - dx * p.y + p2.x * p1.y - p2.y * p1.x);
+            distSq = (num * num) / lenSq;
+          }
+          if (distSq > maxDistSq) {
+            maxDistSq = distSq;
+            maxIdx = i;
+          }
+        }
+
+        if (maxDistSq > epsSq) {
+          keep[maxIdx] = 1;
+          if (maxIdx - start > 1) stack.push([start, maxIdx]);
+          if (end - maxIdx > 1) stack.push([maxIdx, end]);
+        }
+      }
+
+      const out = [];
+      for (let i = 0; i < pts.length; i++) {
+        if (keep[i]) out.push(pts[i]);
+      }
+      return out;
+    }
+
+    // Canvas Bézier Drawing Engine
+    function drawBezierPoly(ctx, pts, isClosed, scaleX, scaleY, h) {
+      if (pts.length < 2) return;
+      const n = pts.length;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x * scaleX, (h - pts[0].y) * scaleY);
+
+      if (n === 2) {
+        ctx.lineTo(pts[1].x * scaleX, (h - pts[1].y) * scaleY);
+        return;
+      }
+
+      if (isClosed) {
+        for (let i = 0; i < n; i++) {
+          const pPrev  = pts[(i - 1 + n) % n];
+          const pCurr  = pts[i];
+          const pNext  = pts[(i + 1) % n];
+          const pNext2 = pts[(i + 2) % n];
+
+          const cp1x = (pCurr.x + (pNext.x - pPrev.x) / 6.0) * scaleX;
+          const cp1y = (h - (pCurr.y + (pNext.y - pPrev.y) / 6.0)) * scaleY;
+          const cp2x = (pNext.x - (pNext2.x - pCurr.x) / 6.0) * scaleX;
+          const cp2y = (h - (pNext.y - (pNext2.y - pCurr.y) / 6.0)) * scaleY;
+          const targetX = pNext.x * scaleX;
+          const targetY = (h - pNext.y) * scaleY;
+
+          ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, targetX, targetY);
+        }
+        ctx.closePath();
+      } else {
+        for (let i = 0; i < n - 1; i++) {
+          const pPrev  = (i === 0) ? pts[0] : pts[i - 1];
+          const pCurr  = pts[i];
+          const pNext  = pts[i + 1];
+          const pNext2 = (i + 2 < n) ? pts[i + 2] : pts[i + 1];
+
+          const cp1x = (pCurr.x + (pNext.x - pPrev.x) / 6.0) * scaleX;
+          const cp1y = (h - (pCurr.y + (pNext.y - pPrev.y) / 6.0)) * scaleY;
+          const cp2x = (pNext.x - (pNext2.x - pCurr.x) / 6.0) * scaleX;
+          const cp2y = (h - (pNext.y - (pNext2.y - pCurr.y) / 6.0)) * scaleY;
+          const targetX = pNext.x * scaleX;
+          const targetY = (h - pNext.y) * scaleY;
+
+          ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, targetX, targetY);
+        }
+      }
+    }
+
+    // SVG Cubic Bézier Spline Formatter (LightBurn native C/S commands)
+    function bezierPathD(pts, isClosed, scaleX, scaleY, h) {
+      if (pts.length < 2) return '';
+      const n = pts.length;
+      let d = `M ${(pts[0].x * scaleX).toFixed(3)} ${((h - pts[0].y) * scaleY).toFixed(3)}`;
+
+      if (n === 2) {
+        d += ` L ${(pts[1].x * scaleX).toFixed(3)} ${((h - pts[1].y) * scaleY).toFixed(3)}`;
+        return d;
+      }
+
+      if (isClosed) {
+        for (let i = 0; i < n; i++) {
+          const pPrev  = pts[(i - 1 + n) % n];
+          const pCurr  = pts[i];
+          const pNext  = pts[(i + 1) % n];
+          const pNext2 = pts[(i + 2) % n];
+
+          const cp1x = ((pCurr.x + (pNext.x - pPrev.x) / 6.0) * scaleX).toFixed(3);
+          const cp1y = ((h - (pCurr.y + (pNext.y - pPrev.y) / 6.0)) * scaleY).toFixed(3);
+          const cp2x = ((pNext.x - (pNext2.x - pCurr.x) / 6.0) * scaleX).toFixed(3);
+          const cp2y = ((h - (pNext.y - (pNext2.y - pCurr.y) / 6.0)) * scaleY).toFixed(3);
+          const targetX = (pNext.x * scaleX).toFixed(3);
+          const targetY = ((h - pNext.y) * scaleY).toFixed(3);
+
+          d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${targetX} ${targetY}`;
+        }
+        d += ' Z';
+      } else {
+        for (let i = 0; i < n - 1; i++) {
+          const pPrev  = (i === 0) ? pts[0] : pts[i - 1];
+          const pCurr  = pts[i];
+          const pNext  = pts[i + 1];
+          const pNext2 = (i + 2 < n) ? pts[i + 2] : pts[i + 1];
+
+          const cp1x = ((pCurr.x + (pNext.x - pPrev.x) / 6.0) * scaleX).toFixed(3);
+          const cp1y = ((h - (pCurr.y + (pNext.y - pPrev.y) / 6.0)) * scaleY).toFixed(3);
+          const cp2x = ((pNext.x - (pNext2.x - pCurr.x) / 6.0) * scaleX).toFixed(3);
+          const cp2y = ((h - (pNext.y - (pNext2.y - pCurr.y) / 6.0)) * scaleY).toFixed(3);
+          const targetX = (pNext.x * scaleX).toFixed(3);
+          const targetY = ((h - pNext.y) * scaleY).toFixed(3);
+
+          d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${targetX} ${targetY}`;
+        }
+      }
+      return d;
+    }
+
+    function fastOptimizePaths(items) {
+      if (items.length <= 1) return items;
+      const n = items.length;
+      const visited = new Uint8Array(n);
+      const ordered = [items[0]];
+      visited[0] = 1;
+      let curEnd = items[0].pts[items[0].pts.length - 1];
+
+      for (let step = 1; step < n; step++) {
+        let bestIdx = -1;
+        let bestDistSq = Infinity;
+        let rev = false;
+
+        for (let i = 0; i < n; i++) {
+          if (visited[i]) continue;
+          const p = items[i].pts;
+          const dStart = (p[0].x - curEnd.x)**2 + (p[0].y - curEnd.y)**2;
+          if (dStart < bestDistSq) {
+            bestDistSq = dStart; bestIdx = i; rev = false;
+          }
+          if (!items[i].isClosed) {
+            const dEnd = (p[p.length - 1].x - curEnd.x)**2 + (p[p.length - 1].y - curEnd.y)**2;
+            if (dEnd < bestDistSq) {
+              bestDistSq = dEnd; bestIdx = i; rev = true;
+            }
+          }
+        }
+
+        if (bestIdx !== -1) {
+          visited[bestIdx] = 1;
+          const chosen = items[bestIdx];
+          if (rev && !chosen.isClosed) {
+            chosen.pts.reverse();
+          }
+          ordered.push(chosen);
+          curEnd = chosen.pts[chosen.pts.length - 1];
+        } else {
+          break;
+        }
+      }
+      return ordered;
+    }
+
+    // Topological Marching Squares with unambiguous Edge Keying (Eliminates float hash snapping)
+    function extractContoursFast(grid, w, h, threshold) {
+      const segments = [];
+      const lerp = (p0, p1, v0, v1) => {
+        const d = v1 - v0;
+        if (Math.abs(d) < 1e-7) return p0;
+        return p0 + ((threshold - v0) / d) * (p1 - p0);
+      };
+
+      for (let y = 0; y < h - 1; y++) {
+        const row = y * w;
+        const nextRow = (y + 1) * w;
+        for (let x = 0; x < w - 1; x++) {
+          const bl = grid[row + x];
+          const br = grid[row + x + 1];
+          const tr = grid[nextRow + x + 1];
+          const tl = grid[nextRow + x];
+
+          let c = 0;
+          if (bl >= threshold) c |= 1;
+          if (br >= threshold) c |= 2;
+          if (tr >= threshold) c |= 4;
+          if (tl >= threshold) c |= 8;
+          if (c === 0 || c === 15) continue;
+
+          const ptB = { x: lerp(x, x + 1, bl, br), y: y };
+          const ptR = { x: x + 1, y: lerp(y, y + 1, br, tr) };
+          const ptT = { x: lerp(x, x + 1, tl, tr), y: y + 1 };
+          const ptL = { x: x, y: lerp(y, y + 1, bl, tl) };
+
+          const eB = { key: `H:${x},${y}`,     pt: ptB };
+          const eR = { key: `V:${x + 1},${y}`, pt: ptR };
+          const eT = { key: `H:${x},${y + 1}`, pt: ptT };
+          const eL = { key: `V:${x},${y}`,     pt: ptL };
+
+          switch (c) {
+            case 1:  case 14: segments.push([eL, eB]); break;
+            case 2:  case 13: segments.push([eB, eR]); break;
+            case 3:  case 12: segments.push([eL, eR]); break;
+            case 4:  case 11: segments.push([eT, eR]); break;
+            case 5:
+              segments.push([eL, eT]);
+              segments.push([eB, eR]);
+              break;
+            case 6:  case 9:  segments.push([eB, eT]); break;
+            case 7:  case 8:  segments.push([eL, eT]); break;
+            case 10:
+              segments.push([eL, eB]);
+              segments.push([eT, eR]);
+              break;
+          }
+        }
+      }
+
+      if (segments.length === 0) return [];
+
+      const adj = new Map();
+      for (let i = 0; i < segments.length; i++) {
+        const e1 = segments[i][0];
+        const e2 = segments[i][1];
+        if (e1.key === e2.key) continue;
+
+        let n1 = adj.get(e1.key);
+        if (!n1) { n1 = { pt: e1.pt, nbrs: [] }; adj.set(e1.key, n1); }
+        let n2 = adj.get(e2.key);
+        if (!n2) { n2 = { pt: e2.pt, nbrs: [] }; adj.set(e2.key, n2); }
+
+        n1.nbrs.push({ key: e2.key, pt: e2.pt });
+        n2.nbrs.push({ key: e1.key, pt: e1.pt });
+      }
+
+      const visitedEdges = new Set();
+      const extracted = [];
+
+      for (const [startKey, startNode] of adj.entries()) {
+        for (let e = 0; e < startNode.nbrs.length; e++) {
+          const firstNbr = startNode.nbrs[e];
+          const edgeId = `${startKey}->${firstNbr.key}`;
+          const edgeIdRev = `${firstNbr.key}->${startKey}`;
+          if (visitedEdges.has(edgeId) || visitedEdges.has(edgeIdRev)) continue;
+
+          visitedEdges.add(edgeId);
+          visitedEdges.add(edgeIdRev);
+
+          const polyline = [startNode.pt, firstNbr.pt];
+          let curKey = firstNbr.key;
+          let isClosed = false;
+
+          while (true) {
+            const curNode = adj.get(curKey);
+            if (!curNode) break;
+
+            let nextCand = null;
+            for (let j = 0; j < curNode.nbrs.length; j++) {
+              const cand = curNode.nbrs[j];
+              const cEdge = `${curKey}->${cand.key}`;
+              const cEdgeRev = `${cand.key}->${curKey}`;
+              if (!visitedEdges.has(cEdge) && !visitedEdges.has(cEdgeRev)) {
+                visitedEdges.add(cEdge);
+                visitedEdges.add(cEdgeRev);
+                nextCand = cand;
+                break;
+              }
+            }
+
+            if (nextCand) {
+              polyline.push(nextCand.pt);
+              curKey = nextCand.key;
+              if (curKey === startKey) {
+                isClosed = true;
+                break;
+              }
+            } else {
+              break;
+            }
+          }
+
+          if (polyline.length >= 2) {
+            if (isClosed) {
+              polyline[polyline.length - 1] = polyline[0];
+            }
+            extracted.push({ pts: polyline, isClosed });
+          }
+        }
+      }
+
+      return extracted;
+    }
+
+    function traceVectorContours() {
+      // 1. Render 16-bit packed elevation to dedicated offscreen FBO
+      const aspect = glCanvas.height / glCanvas.width;
+      traceW = 560;
+      traceH = Math.round(traceW * aspect);
+
+      gl.bindTexture(gl.TEXTURE_2D, traceTex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, traceW, traceH, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+
+      gl.bindFramebuffer(gl.FRAMEBUFFER, traceFBO);
+      gl.viewport(0, 0, traceW, traceH);
+      gl.useProgram(dispProg);
+
+      const dispPos = gl.getAttribLocation(dispProg, 'a_position');
+      gl.enableVertexAttribArray(dispPos);
+      gl.vertexAttribPointer(dispPos, 2, gl.FLOAT, false, 0, 0);
+
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, readFBO.tex);
+      gl.uniform1i(gl.getUniformLocation(dispProg, 'u_simTexture'), 0);
+
+      gl.uniform2f(gl.getUniformLocation(dispProg, 'u_resolution'), traceW, traceH);
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_time'), performance.now() * 0.001);
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_shader_type'), parseFloat(document.getElementById('engineSelect').value));
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_warp_scale'), parseFloat(document.getElementById('sl-warp').value));
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_plane_tilt'), (parseFloat(document.getElementById('sl-tilt').value) * Math.PI) / 180.0);
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_flow_angle'), (parseFloat(document.getElementById('sl-flow-angle').value) * Math.PI) / 180.0);
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_segs'), parseFloat(document.getElementById('sl-k-segs').value));
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_angle'), (parseFloat(document.getElementById('sl-k-angle').value) * Math.PI) / 180.0);
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_pinch'), parseFloat(document.getElementById('sl-k-pinch').value));
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_zoom'), parseFloat(document.getElementById('sl-k-zoom').value));
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_mirror'), parseFloat(document.getElementById('sl-k-mode').value));
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_encode_16bit'), 1.0);
+
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+      const tracePixels = new Uint8Array(traceW * traceH * 4);
+      gl.readPixels(0, 0, traceW, traceH, gl.RGBA, gl.UNSIGNED_BYTE, tracePixels);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+      // 2. Decode 16-bit Float Heightfield (65,536 depth levels)
+      const grid = new Float32Array(traceW * traceH);
+      for (let i = 0; i < traceW * traceH; i++) {
+        const hi = tracePixels[i * 4];
+        const lo = tracePixels[i * 4 + 1];
+        grid[i] = (hi * 256.0 + lo) / 65535.0;
+      }
+
+      // 3. Continuous field pre-filter
+      const blurPasses = parseInt(document.getElementById('sl-blur').value);
+      blurScalarGrid(grid, traceW, traceH, blurPasses);
+
+      const totalStrata = parseInt(document.getElementById('sl-density').value);
+      const rdpVal = parseFloat(document.getElementById('sl-rdp').value);
+      const smoothPasses = parseInt(document.getElementById('sl-smoothness').value);
+      extractedVectorLayers = [];
+
+      let totalNodes = 0;
+      let totalPaths = 0;
+      let penDownDist = 0;
+      let penUpDist = 0;
+
+      layersState.forEach(layer => {
+        if (!layer.enabled) return;
+        const layerItems = [];
+        const strataInLayer = Math.max(2, Math.round(totalStrata * (layer.maxElev - layer.minElev)));
+
+        for (let s = 0; s < strataInLayer; s++) {
+          const th = layer.minElev + (s / (strataInLayer - 1)) * (layer.maxElev - layer.minElev);
+          const rawContourItems = extractContoursFast(grid, traceW, traceH, th);
+
+          rawContourItems.forEach(item => {
+            // Gentle pre-filter to decimate redundant collinear points without clipping subtle curves
+            const preFiltered = rdpPreFilter(item.pts, rdpVal * 0.18);
+            // Multi-pass Laplacian smoothing to form smooth tangents
+            const smoothed = smoothPolyline(preFiltered, smoothPasses, item.isClosed);
+            if (smoothed.length >= 2) {
+              layerItems.push({ pts: smoothed, isClosed: item.isClosed });
+            }
+          });
+        }
+
+        const optimized = fastOptimizePaths(layerItems);
+        extractedVectorLayers.push({
+          id: layer.id,
+          lbCode: layer.lbCode,
+          color: layer.color,
+          items: optimized,
+          traceW,
+          traceH
+        });
+
+        let prevEnd = null;
+        optimized.forEach(it => {
+          totalPaths++;
+          totalNodes += it.pts.length;
+          if (prevEnd) penUpDist += Math.hypot(it.pts[0].x - prevEnd.x, it.pts[0].y - prevEnd.y);
+          for (let i = 1; i < it.pts.length; i++) {
+            penDownDist += Math.hypot(it.pts[i].x - it.pts[i - 1].x, it.pts[i].y - it.pts[i - 1].y);
+          }
+          prevEnd = it.pts[it.pts.length - 1];
+        });
+      });
+
+      const [bedW] = document.getElementById('sl-bed-size').value.split(',').map(Number);
+      const mmScale = bedW / traceW;
+      document.getElementById('hud-nodes').textContent = totalNodes.toLocaleString();
+      document.getElementById('hud-paths').textContent = totalPaths.toLocaleString();
+      document.getElementById('hud-dist').textContent = (penDownDist * mmScale * 0.001).toFixed(2) + ' m';
+      document.getElementById('hud-air').textContent = (penUpDist * mmScale * 0.001).toFixed(2) + ' m';
+
+      drawVectorPreview();
+    }
+
+    function drawVectorPreview() {
+      vCtx.clearRect(0, 0, vCanvas.width, vCanvas.height);
+      const viewMode = document.getElementById('sl-view-mode').value;
+      if (viewMode === 'shader') return;
+
+      const exportMode = document.getElementById('sl-export-mode').value;
+
+      if (viewMode === 'vector') {
+        vCtx.fillStyle = '#f8fafc';
+        vCtx.fillRect(0, 0, vCanvas.width, vCanvas.height);
+      } else if (viewMode === 'blueprint') {
+        vCtx.fillStyle = '#0f172a';
+        vCtx.fillRect(0, 0, vCanvas.width, vCanvas.height);
+      }
+
+      extractedVectorLayers.forEach(layer => {
+        const strokeColor = (viewMode === 'blueprint') ? '#38bdf8' : layer.color;
+        const scaleX = vCanvas.width / layer.traceW;
+        const scaleY = vCanvas.height / layer.traceH;
+
+        if (exportMode === 'fills' || exportMode === 'both') {
+          vCtx.fillStyle = (viewMode === 'blueprint') ? 'rgba(56, 189, 248, 0.18)' : `${layer.color}33`;
+          layer.items.forEach(it => {
+            if (!it.isClosed) return;
+            drawBezierPoly(vCtx, it.pts, true, scaleX, scaleY, layer.traceH);
+            vCtx.fill('evenodd');
+          });
+        }
+
+        if (exportMode === 'strokes' || exportMode === 'both') {
+          vCtx.strokeStyle = strokeColor;
+          vCtx.lineWidth = Math.max(1.0, parseFloat(document.getElementById('sl-stroke-width').value) * 1.5);
+          vCtx.lineCap = 'round';
+          vCtx.lineJoin = 'round';
+
+          layer.items.forEach(it => {
+            drawBezierPoly(vCtx, it.pts, it.isClosed, scaleX, scaleY, layer.traceH);
+            vCtx.stroke();
+          });
+        }
+      });
+    }
+
+    let traceTimer = null;
+    function scheduleVectorTrace() {
+      clearTimeout(traceTimer);
+      traceTimer = setTimeout(traceVectorContours, 150);
+    }
+
+    // =========================================================================
+    // 4. LIGHTBURN DIRECT SVG MULTI-LAYER EXPORTER (CUBIC BÉZIER SPLINES)
+    // =========================================================================
+    function exportLightBurnSVG() {
+      if (extractedVectorLayers.length === 0) traceVectorContours();
+
+      const [bedW_mm, bedH_mm] = document.getElementById('sl-bed-size').value.split(',').map(Number);
+      const strokeMm = parseFloat(document.getElementById('sl-stroke-width').value);
+      const exportMode = document.getElementById('sl-export-mode').value;
+
+      let svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n`;
+      svg += `<!-- LightBurn Spline Multi-Layer SVG Generated by VectorK1 Studio -->\n`;
+      svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${bedW_mm}mm" height="${bedH_mm}mm" viewBox="0 0 ${bedW_mm} ${bedH_mm}">\n`;
+
+      extractedVectorLayers.forEach(layer => {
+        if (!layer.items || layer.items.length === 0) return;
+
+        const scaleX = bedW_mm / layer.traceW;
+        const scaleY = bedH_mm / layer.traceH;
+
+        if (exportMode === 'fills' || exportMode === 'both') {
+          let fillPathD = '';
+          layer.items.forEach(it => {
+            if (!it.isClosed || it.pts.length < 3) return;
+            fillPathD += bezierPathD(it.pts, true, scaleX, scaleY, layer.traceH) + ' ';
+          });
+
+          if (fillPathD.length > 0) {
+            svg += `  <g id="${layer.lbCode}_Fill_${layer.id}">\n`;
+            svg += `    <path d="${fillPathD.trim()}" fill="${layer.color}" stroke="${layer.color}" stroke-width="0.05" fill-rule="evenodd" />\n`;
+            svg += `  </g>\n`;
+          }
+        }
+
+        if (exportMode === 'strokes' || exportMode === 'both') {
+          let strokePathD = '';
+          layer.items.forEach(it => {
+            strokePathD += bezierPathD(it.pts, it.isClosed, scaleX, scaleY, layer.traceH) + ' ';
+          });
+
+          if (strokePathD.length > 0) {
+            svg += `  <g id="${layer.lbCode}_Line_${layer.id}" stroke="${layer.color}" fill="none" stroke-width="${strokeMm}" stroke-linecap="round" stroke-linejoin="round">\n`;
+            svg += `    <path d="${strokePathD.trim()}" />\n`;
+            svg += `  </g>\n`;
+          }
+        }
+      });
+
+      svg += `</svg>`;
+
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `LightBurn-Spline-${exportMode}-${Date.now()}.svg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById('exportSvgBtn').addEventListener('click', exportLightBurnSVG);
+    document.getElementById('refreshPlotBtn').addEventListener('click', traceVectorContours);
+
+    // =========================================================================
+    // 5. ANIMATION LOOP & EVENT ATTACHMENTS
+    // =========================================================================
+    function render(now) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, writeFBO.fbo);
+      gl.viewport(0, 0, simWidth, simHeight);
+      gl.useProgram(simProg);
+      gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+
+      const simPos = gl.getAttribLocation(simProg, 'a_position');
+      gl.enableVertexAttribArray(simPos);
+      gl.vertexAttribPointer(simPos, 2, gl.FLOAT, false, 0, 0);
+
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, readFBO.tex);
+      gl.uniform1i(gl.getUniformLocation(simProg, 'u_prevBuffer'), 0);
+      gl.uniform2f(gl.getUniformLocation(simProg, 'u_resolution'), simWidth, simHeight);
+      gl.uniform2f(gl.getUniformLocation(simProg, 'u_mouse'), mouse.x, mouse.y);
+      gl.uniform2f(gl.getUniformLocation(simProg, 'u_mouse_vel'), mouse.vx, mouse.vy);
+      gl.uniform1f(gl.getUniformLocation(simProg, 'u_pressure'), mouse.p);
+      gl.uniform1f(gl.getUniformLocation(simProg, 'u_persistence'), 0.995);
+
+      gl.uniform1f(gl.getUniformLocation(simProg, 'u_k_segs'), parseFloat(document.getElementById('sl-k-segs').value));
+      gl.uniform1f(gl.getUniformLocation(simProg, 'u_k_angle'), (parseFloat(document.getElementById('sl-k-angle').value) * Math.PI) / 180.0);
+      gl.uniform1f(gl.getUniformLocation(simProg, 'u_k_mirror'), parseFloat(document.getElementById('sl-k-mode').value));
+
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      swapFBO();
+
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+      gl.useProgram(dispProg);
+
+      const dispPos = gl.getAttribLocation(dispProg, 'a_position');
+      gl.enableVertexAttribArray(dispPos);
+      gl.vertexAttribPointer(dispPos, 2, gl.FLOAT, false, 0, 0);
+
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, readFBO.tex);
+      gl.uniform1i(gl.getUniformLocation(dispProg, 'u_simTexture'), 0);
+
+      gl.uniform2f(gl.getUniformLocation(dispProg, 'u_resolution'), glCanvas.width, glCanvas.height);
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_time'), now * 0.001);
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_shader_type'), parseFloat(document.getElementById('engineSelect').value));
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_warp_scale'), parseFloat(document.getElementById('sl-warp').value));
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_plane_tilt'), (parseFloat(document.getElementById('sl-tilt').value) * Math.PI) / 180.0);
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_flow_angle'), (parseFloat(document.getElementById('sl-flow-angle').value) * Math.PI) / 180.0);
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_segs'), parseFloat(document.getElementById('sl-k-segs').value));
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_angle'), (parseFloat(document.getElementById('sl-k-angle').value) * Math.PI) / 180.0);
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_pinch'), parseFloat(document.getElementById('sl-k-pinch').value));
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_zoom'), parseFloat(document.getElementById('sl-k-zoom').value));
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_mirror'), parseFloat(document.getElementById('sl-k-mode').value));
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_encode_16bit'), 0.0); // Render normal grayscale to screen
+
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+      mouse.vx *= 0.85; mouse.vy *= 0.85;
+      requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+
+    const binds = [
+      { id: 'sl-smoothness',   disp: 'smooth-num',      fn: v => `${v} Passes` },
+      { id: 'sl-blur',         disp: 'blur-num',        fn: v => `${v} Passes` },
+      { id: 'sl-density',      disp: 'density-num',     fn: v => `${v} Strata` },
+      { id: 'sl-stroke-width', disp: 'width-num',       fn: v => `${parseFloat(v).toFixed(2)} mm` },
+      { id: 'sl-rdp',          disp: 'rdp-num',         fn: v => parseFloat(v).toFixed(2) },
+      { id: 'sl-warp',         disp: 'warp-num',        fn: v => parseFloat(v).toFixed(2) },
+      { id: 'sl-tilt',         disp: 'tilt-num',        fn: v => `${v}°` },
+      { id: 'sl-flow-angle',   disp: 'flow-angle-num',  fn: v => `${v}°` },
+      { id: 'sl-k-segs',       disp: 'ksegs-num',       fn: v => parseInt(v) === 1 ? '1 (Off)' : `${v} Petals` },
+      { id: 'sl-k-angle',      disp: 'kangle-num',      fn: v => `${v}°` },
+      { id: 'sl-k-pinch',      disp: 'kpinch-num',      fn: v => parseFloat(v).toFixed(2) },
+      { id: 'sl-k-zoom',       disp: 'kzoom-num',       fn: v => parseFloat(v).toFixed(2) }
+    ];
+
+    binds.forEach(b => {
+      document.getElementById(b.id).addEventListener('input', (e) => {
+        document.getElementById(b.disp).textContent = b.fn(e.target.value);
+        if (b.id === 'sl-stroke-width') {
+          layersState.forEach((_, i) => {
+            const el = document.getElementById(`layer-stroke-val-${i}`);
+            if (el) el.textContent = `${parseFloat(e.target.value).toFixed(2)}mm`;
+          });
+        }
+        scheduleVectorTrace();
+      });
+    });
+
+    ['sl-view-mode', 'sl-export-mode', 'sl-bed-size', 'engineSelect', 'sl-k-mode'].forEach(id => {
+      document.getElementById(id).addEventListener('change', () => {
+        if (id === 'engineSelect') {
+          document.getElementById('hud-engine').textContent = document.getElementById('engineSelect').options[document.getElementById('engineSelect').selectedIndex].text.split('(')[0];
+        }
+        if (id === 'sl-view-mode') {
+          document.getElementById('hud-view').textContent = document.getElementById('sl-view-mode').options[document.getElementById('sl-view-mode').selectedIndex].text.split('(')[0];
+        }
+        scheduleVectorTrace();
+      });
+    });
+
+    const drawer = document.getElementById('drawer');
+    const toggleDrawerBtn = document.getElementById('toggleDrawerBtn');
+    toggleDrawerBtn.addEventListener('click', () => {
+      if (drawer.style.display === 'none') {
+        drawer.style.display = 'flex';
+        toggleDrawerBtn.textContent = 'Hide';
+      } else {
+        drawer.style.display = 'none';
+        toggleDrawerBtn.textContent = 'Show';
+      }
+    });
+
+    renderLayerUI();
+    resize();
+    setTimeout(traceVectorContours, 200);
+  </script>
+</body>
+</html>
