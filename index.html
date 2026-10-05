@@ -257,8 +257,8 @@
   <div id="ui-container">
     <div id="hud" class="panel">
       <div>Engine: <span class="hl" id="hud-engine">Sacred Chamber</span> | Mode: <span class="hl" id="hud-view">Hybrid</span></div>
-      <div>Plotted Nodes: <span class="hl" id="hud-nodes">0</span> | Spline Paths: <span class="hl" id="hud-paths">0</span></div>
-      <div>Pen Travel: <span class="hl" id="hud-dist">0.00 m</span> | Air Travel: <span class="hl" id="hud-air">0.00 m</span></div>
+      <div>Plotted Nodes: <span class="hl" id="hud-nodes">0</span> | Flowing Paths: <span class="hl" id="hud-paths">0</span></div>
+      <div>Pen Travel: <span class="hl" id="hud-dist">0.00 m</span> | Air Liftoff: <span class="hl" id="hud-air">0.00 m</span></div>
     </div>
 
     <div class="panel">
@@ -268,29 +268,55 @@
       </div>
 
       <div id="drawer">
-        <div class="sub-heading">Display & Canvas Bed</div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
-          <select id="sl-view-mode">
-            <option value="overlay" selected>Hybrid (Shader + Lines)</option>
-            <option value="vector">White Paper Plotter</option>
-            <option value="blueprint">Dark Blueprint Plotter</option>
-            <option value="shader">Shader Only</option>
+        <div class="sub-heading">Plotter Architecture & Canvas Bed</div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <select id="sl-plot-style" style="width:100%; border-color:#38bdf8;">
+            <option value="ribbons" selected>🌊 Flowing Wave Lines (Plotter Ribbons)</option>
+            <option value="contours">🏔️ Topographical Strata (Isolines)</option>
           </select>
-          <select id="sl-bed-size">
-            <option value="200,200">200 × 200 mm (Square)</option>
-            <option value="297,210" selected>A4 Landscape (297×210)</option>
-            <option value="420,297">A3 Landscape (420×297)</option>
-            <option value="300,300">LightBurn 300×300 mm</option>
-          </select>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+            <select id="sl-view-mode">
+              <option value="overlay" selected>Hybrid (Shader + Lines)</option>
+              <option value="vector">White Paper Plotter</option>
+              <option value="blueprint">Dark Blueprint Plotter</option>
+              <option value="shader">Shader Only</option>
+            </select>
+            <select id="sl-bed-size">
+              <option value="200,200">200 × 200 mm (Square)</option>
+              <option value="297,210" selected>A4 Landscape (297×210)</option>
+              <option value="420,297">A3 Landscape (420×297)</option>
+              <option value="300,300">LightBurn 300×300 mm</option>
+            </select>
+          </div>
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
-          <span style="font-size:10.5px; color:rgba(255,255,255,0.75);">Vector Toolpath Mode</span>
+          <span style="font-size:10.5px; color:rgba(255,255,255,0.75);">Vector Output Type</span>
           <select id="sl-export-mode" style="width:160px;">
-            <option value="both" selected>⚡ Both (Fills + Lines)</option>
-            <option value="strokes">🖋️ Lines (Pen / Score)</option>
+            <option value="strokes" selected>🖋️ Lines (Pen / Score)</option>
+            <option value="both">⚡ Both (Fills + Lines)</option>
             <option value="fills">🔥 Fills (Laser Engrave)</option>
           </select>
+        </div>
+
+        <!-- Flowing Wave Ribbons Configuration -->
+        <div id="ribbon-controls-panel">
+          <div class="sub-heading">Flowing Line Dynamics</div>
+          <div class="slider-row">
+            <div class="slider-header">
+              <span>Wave Displacement Height</span>
+              <span id="wave-amp-num" class="val">18.0 mm</span>
+            </div>
+            <input type="range" id="sl-wave-amp" min="0.0" max="60.0" step="0.5" value="18.0">
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-header">
+              <span>Baseline Angle</span>
+              <span id="wave-angle-num" class="val">0°</span>
+            </div>
+            <input type="range" id="sl-wave-angle" min="-90" max="90" step="1" value="0">
+          </div>
         </div>
 
         <!-- Smoothness & Quality Controls -->
@@ -313,10 +339,10 @@
 
         <div class="slider-row">
           <div class="slider-header">
-            <span>Global Line Density</span>
-            <span id="density-num" class="val">22 Strata</span>
+            <span>Line Count (Density)</span>
+            <span id="density-num" class="val">48 Lines</span>
           </div>
-          <input type="range" id="sl-density" min="6" max="48" step="1" value="22">
+          <input type="range" id="sl-density" min="10" max="120" step="1" value="48">
         </div>
 
         <div class="slider-row">
@@ -453,7 +479,7 @@
             <input type="color" id="col-layer-${idx}" value="${layer.color}">
           </div>
           <div style="display:flex; justify-content:space-between; font-size:10px; color:#94a3b8;">
-            <span>Elev: ${(layer.minElev * 100).toFixed(0)}% → ${(layer.maxElev * 100).toFixed(0)}%</span>
+            <span>Channel #${idx + 1}</span>
             <span>Stroke: <span id="layer-stroke-val-${idx}">${document.getElementById('sl-stroke-width').value}mm</span></span>
           </div>
         `;
@@ -731,7 +757,6 @@
     let readFBO = { fbo: fboA, tex: texA }, writeFBO = { fbo: fboB, tex: texB };
     function swapFBO() { const t = readFBO; readFBO = writeFBO; writeFBO = t; }
 
-    // Dedicated 16-Bit Extraction Framebuffer (Eliminates nearest-neighbor aliasing)
     let traceW = 560, traceH = 560;
     const traceFBO = gl.createFramebuffer();
     const traceTex = gl.createTexture();
@@ -770,7 +795,7 @@
     });
 
     // =========================================================================
-    // 3. TOPOLOGICAL MARCHING SQUARES & CUBIC BÉZIER SPLINING
+    // 3. VECTOR ENGINES: PLOTTER RIBBONS & TOPOGRAPHICAL MARCHING SQUARES
     // =========================================================================
     const vCanvas = document.getElementById('vectorPreviewCanvas');
     const vCtx = vCanvas.getContext('2d');
@@ -785,7 +810,6 @@
     }
     window.addEventListener('resize', resize);
 
-    // Continuous 2D Gaussian filter operating on high-precision float values
     function blurScalarGrid(grid, w, h, passes = 2) {
       if (passes <= 0) return;
       const temp = new Float32Array(w * h);
@@ -809,7 +833,6 @@
       }
     }
 
-    // Weighted vertex smoother
     function smoothPolyline(pts, passes, isClosed) {
       if (pts.length < 3 || passes <= 0) return pts;
       let cur = pts;
@@ -834,7 +857,6 @@
       return cur;
     }
 
-    // Gentle collinear node decimation (does not clip subtle curvature)
     function rdpPreFilter(pts, epsilon) {
       if (pts.length <= 2 || epsilon <= 0.001) return pts;
       const keep = new Uint8Array(pts.length);
@@ -883,7 +905,6 @@
       return out;
     }
 
-    // Canvas Bézier Drawing Engine
     function drawBezierPoly(ctx, pts, isClosed, scaleX, scaleY, h) {
       if (pts.length < 2) return;
       const n = pts.length;
@@ -931,7 +952,6 @@
       }
     }
 
-    // SVG Cubic Bézier Spline Formatter (LightBurn native C/S commands)
     function bezierPathD(pts, isClosed, scaleX, scaleY, h) {
       if (pts.length < 2) return '';
       const n = pts.length;
@@ -979,50 +999,78 @@
       return d;
     }
 
-    function fastOptimizePaths(items) {
-      if (items.length <= 1) return items;
-      const n = items.length;
-      const visited = new Uint8Array(n);
-      const ordered = [items[0]];
-      visited[0] = 1;
-      let curEnd = items[0].pts[items[0].pts.length - 1];
+    // High-precision Bilinear Interpolation of scalar grid
+    function sampleGridBilinear(grid, w, h, fx, fy) {
+      const cx = Math.max(0.0, Math.min(w - 1.001, fx));
+      const cy = Math.max(0.0, Math.min(h - 1.001, fy));
+      const x0 = Math.floor(cx), y0 = Math.floor(cy);
+      const x1 = Math.min(w - 1, x0 + 1), y1 = Math.min(h - 1, y0 + 1);
+      const wx = cx - x0, wy = cy - y0;
 
-      for (let step = 1; step < n; step++) {
-        let bestIdx = -1;
-        let bestDistSq = Infinity;
-        let rev = false;
+      const v00 = grid[y0 * w + x0];
+      const v10 = grid[y0 * w + x1];
+      const v01 = grid[y1 * w + x0];
+      const v11 = grid[y1 * w + x1];
 
-        for (let i = 0; i < n; i++) {
-          if (visited[i]) continue;
-          const p = items[i].pts;
-          const dStart = (p[0].x - curEnd.x)**2 + (p[0].y - curEnd.y)**2;
-          if (dStart < bestDistSq) {
-            bestDistSq = dStart; bestIdx = i; rev = false;
-          }
-          if (!items[i].isClosed) {
-            const dEnd = (p[p.length - 1].x - curEnd.x)**2 + (p[p.length - 1].y - curEnd.y)**2;
-            if (dEnd < bestDistSq) {
-              bestDistSq = dEnd; bestIdx = i; rev = true;
-            }
-          }
-        }
-
-        if (bestIdx !== -1) {
-          visited[bestIdx] = 1;
-          const chosen = items[bestIdx];
-          if (rev && !chosen.isClosed) {
-            chosen.pts.reverse();
-          }
-          ordered.push(chosen);
-          curEnd = chosen.pts[chosen.pts.length - 1];
-        } else {
-          break;
-        }
-      }
-      return ordered;
+      return (1.0 - wx) * (1.0 - wy) * v00 +
+             wx * (1.0 - wy) * v10 +
+             (1.0 - wx) * wy * v01 +
+             wx * wy * v11;
     }
 
-    // Topological Marching Squares with unambiguous Edge Keying (Eliminates float hash snapping)
+    // Generator for Conventional Displaced Flowing Plotter Ribbons
+    function generateDisplacedRibbons(grid, w, h, bedW_mm, numLines, amp_mm, angleDeg) {
+      const rad = (angleDeg * Math.PI) / 180.0;
+      const cosA = Math.cos(rad);
+      const sinA = Math.sin(rad);
+
+      // Normal to baseline (perpendicular wave displacement)
+      const nx = -sinA;
+      const ny = cosA;
+
+      const numSamples = 280; // Sample points per continuous flowing line
+      const mmToGridScale = w / bedW_mm;
+      const ampGrid = amp_mm * mmToGridScale;
+
+      const lines = [];
+      const margin = 0.04;
+      const spanX = w * (1.0 - 2.0 * margin);
+      const spanY = h * (1.0 - 2.0 * margin);
+
+      for (let i = 0; i < numLines; i++) {
+        const lineFraction = i / Math.max(1, numLines - 1);
+        const pts = [];
+
+        // Baseline coordinate spanning from left margin to right margin
+        const baseY = h * margin + spanY * lineFraction;
+
+        for (let s = 0; s < numSamples; s++) {
+          const t = s / (numSamples - 1);
+          const baseX = w * margin + spanX * t;
+
+          // Centered rotation for baseline angle
+          const cx = w * 0.5;
+          const cy = h * 0.5;
+          const dx = baseX - cx;
+          const dy = baseY - cy;
+
+          const rx = cx + (dx * cosA - dy * sinA);
+          const ry = cy + (dx * sinA + dy * cosA);
+
+          const elevation = sampleGridBilinear(grid, w, h, rx, ry);
+
+          // Displace along perpendicular normal
+          const px = rx + nx * (elevation * ampGrid);
+          const py = ry + ny * (elevation * ampGrid);
+
+          pts.push({ x: px, y: py });
+        }
+        lines.push({ pts: pts, isClosed: false });
+      }
+      return lines;
+    }
+
+    // Topological Marching Squares with Edge Keying
     function extractContoursFast(grid, w, h, threshold) {
       const segments = [];
       const lerp = (p0, p1, v0, v1) => {
@@ -1147,12 +1195,10 @@
           }
         }
       }
-
       return extracted;
     }
 
     function traceVectorContours() {
-      // 1. Render 16-bit packed elevation to dedicated offscreen FBO
       const aspect = glCanvas.height / glCanvas.width;
       traceW = 560;
       traceH = Math.round(traceW * aspect);
@@ -1191,7 +1237,6 @@
       gl.readPixels(0, 0, traceW, traceH, gl.RGBA, gl.UNSIGNED_BYTE, tracePixels);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-      // 2. Decode 16-bit Float Heightfield (65,536 depth levels)
       const grid = new Float32Array(traceW * traceH);
       for (let i = 0; i < traceW * traceH; i++) {
         const hi = tracePixels[i * 4];
@@ -1199,11 +1244,12 @@
         grid[i] = (hi * 256.0 + lo) / 65535.0;
       }
 
-      // 3. Continuous field pre-filter
       const blurPasses = parseInt(document.getElementById('sl-blur').value);
       blurScalarGrid(grid, traceW, traceH, blurPasses);
 
-      const totalStrata = parseInt(document.getElementById('sl-density').value);
+      const [bedW] = document.getElementById('sl-bed-size').value.split(',').map(Number);
+      const plotStyle = document.getElementById('sl-plot-style').value;
+      const totalDensity = parseInt(document.getElementById('sl-density').value);
       const rdpVal = parseFloat(document.getElementById('sl-rdp').value);
       const smoothPasses = parseInt(document.getElementById('sl-smoothness').value);
       extractedVectorLayers = [];
@@ -1213,38 +1259,68 @@
       let penDownDist = 0;
       let penUpDist = 0;
 
-      layersState.forEach(layer => {
-        if (!layer.enabled) return;
-        const layerItems = [];
-        const strataInLayer = Math.max(2, Math.round(totalStrata * (layer.maxElev - layer.minElev)));
+      if (plotStyle === 'ribbons') {
+        const amp_mm = parseFloat(document.getElementById('sl-wave-amp').value);
+        const angleDeg = parseFloat(document.getElementById('sl-wave-angle').value);
+        const allRibbons = generateDisplacedRibbons(grid, traceW, traceH, bedW, totalDensity, amp_mm, angleDeg);
 
-        for (let s = 0; s < strataInLayer; s++) {
-          const th = layer.minElev + (s / (strataInLayer - 1)) * (layer.maxElev - layer.minElev);
-          const rawContourItems = extractContoursFast(grid, traceW, traceH, th);
+        // Distribute long flowing lines cyclically across active LightBurn layers
+        const activeLayers = layersState.filter(l => l.enabled);
+        if (activeLayers.length > 0) {
+          activeLayers.forEach(l => {
+            extractedVectorLayers.push({
+              id: l.id,
+              lbCode: l.lbCode,
+              color: l.color,
+              items: [],
+              traceW,
+              traceH
+            });
+          });
 
-          rawContourItems.forEach(item => {
-            // Gentle pre-filter to decimate redundant collinear points without clipping subtle curves
-            const preFiltered = rdpPreFilter(item.pts, rdpVal * 0.18);
-            // Multi-pass Laplacian smoothing to form smooth tangents
-            const smoothed = smoothPolyline(preFiltered, smoothPasses, item.isClosed);
+          allRibbons.forEach((ribbon, idx) => {
+            const preFiltered = rdpPreFilter(ribbon.pts, rdpVal * 0.18);
+            const smoothed = smoothPolyline(preFiltered, smoothPasses, false);
             if (smoothed.length >= 2) {
-              layerItems.push({ pts: smoothed, isClosed: item.isClosed });
+              const targetLayer = extractedVectorLayers[idx % extractedVectorLayers.length];
+              targetLayer.items.push({ pts: smoothed, isClosed: false });
             }
           });
         }
+      } else {
+        layersState.forEach(layer => {
+          if (!layer.enabled) return;
+          const layerItems = [];
+          const strataInLayer = Math.max(2, Math.round(totalDensity * (layer.maxElev - layer.minElev)));
 
-        const optimized = fastOptimizePaths(layerItems);
-        extractedVectorLayers.push({
-          id: layer.id,
-          lbCode: layer.lbCode,
-          color: layer.color,
-          items: optimized,
-          traceW,
-          traceH
+          for (let s = 0; s < strataInLayer; s++) {
+            const th = layer.minElev + (s / (strataInLayer - 1)) * (layer.maxElev - layer.minElev);
+            const rawContourItems = extractContoursFast(grid, traceW, traceH, th);
+
+            rawContourItems.forEach(item => {
+              const preFiltered = rdpPreFilter(item.pts, rdpVal * 0.18);
+              const smoothed = smoothPolyline(preFiltered, smoothPasses, item.isClosed);
+              if (smoothed.length >= 2) {
+                layerItems.push({ pts: smoothed, isClosed: item.isClosed });
+              }
+            });
+          }
+
+          extractedVectorLayers.push({
+            id: layer.id,
+            lbCode: layer.lbCode,
+            color: layer.color,
+            items: layerItems,
+            traceW,
+            traceH
+          });
         });
+      }
 
-        let prevEnd = null;
-        optimized.forEach(it => {
+      // Calculate Plotter stats
+      let prevEnd = null;
+      extractedVectorLayers.forEach(layer => {
+        layer.items.forEach(it => {
           totalPaths++;
           totalNodes += it.pts.length;
           if (prevEnd) penUpDist += Math.hypot(it.pts[0].x - prevEnd.x, it.pts[0].y - prevEnd.y);
@@ -1255,7 +1331,6 @@
         });
       });
 
-      const [bedW] = document.getElementById('sl-bed-size').value.split(',').map(Number);
       const mmScale = bedW / traceW;
       document.getElementById('hud-nodes').textContent = totalNodes.toLocaleString();
       document.getElementById('hud-paths').textContent = totalPaths.toLocaleString();
@@ -1430,7 +1505,7 @@
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_pinch'), parseFloat(document.getElementById('sl-k-pinch').value));
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_zoom'), parseFloat(document.getElementById('sl-k-zoom').value));
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_mirror'), parseFloat(document.getElementById('sl-k-mode').value));
-      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_encode_16bit'), 0.0); // Render normal grayscale to screen
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_encode_16bit'), 0.0);
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
 
@@ -1440,9 +1515,11 @@
     requestAnimationFrame(render);
 
     const binds = [
+      { id: 'sl-wave-amp',     disp: 'wave-amp-num',    fn: v => `${parseFloat(v).toFixed(1)} mm` },
+      { id: 'sl-wave-angle',   disp: 'wave-angle-num',  fn: v => `${v}°` },
       { id: 'sl-smoothness',   disp: 'smooth-num',      fn: v => `${v} Passes` },
       { id: 'sl-blur',         disp: 'blur-num',        fn: v => `${v} Passes` },
-      { id: 'sl-density',      disp: 'density-num',     fn: v => `${v} Strata` },
+      { id: 'sl-density',      disp: 'density-num',     fn: v => `${v} Lines` },
       { id: 'sl-stroke-width', disp: 'width-num',       fn: v => `${parseFloat(v).toFixed(2)} mm` },
       { id: 'sl-rdp',          disp: 'rdp-num',         fn: v => parseFloat(v).toFixed(2) },
       { id: 'sl-warp',         disp: 'warp-num',        fn: v => parseFloat(v).toFixed(2) },
@@ -1467,13 +1544,17 @@
       });
     });
 
-    ['sl-view-mode', 'sl-export-mode', 'sl-bed-size', 'engineSelect', 'sl-k-mode'].forEach(id => {
+    ['sl-plot-style', 'sl-view-mode', 'sl-export-mode', 'sl-bed-size', 'engineSelect', 'sl-k-mode'].forEach(id => {
       document.getElementById(id).addEventListener('change', () => {
         if (id === 'engineSelect') {
           document.getElementById('hud-engine').textContent = document.getElementById('engineSelect').options[document.getElementById('engineSelect').selectedIndex].text.split('(')[0];
         }
         if (id === 'sl-view-mode') {
           document.getElementById('hud-view').textContent = document.getElementById('sl-view-mode').options[document.getElementById('sl-view-mode').selectedIndex].text.split('(')[0];
+        }
+        if (id === 'sl-plot-style') {
+          const isRibbon = document.getElementById('sl-plot-style').value === 'ribbons';
+          document.getElementById('ribbon-controls-panel').style.display = isRibbon ? 'block' : 'none';
         }
         scheduleVectorTrace();
       });
