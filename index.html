@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>VectorK1 - Mathematical Harmonic Plotter Studio</title>
+  <title>VectorK1 - Pen Plotter & LightBurn Studio</title>
   <style>
     * {
       box-sizing: border-box;
@@ -57,7 +57,7 @@
       flex-direction: column;
       gap: 10px;
       z-index: 10;
-      width: 365px;
+      width: 360px;
       max-height: calc(100vh - 28px);
       pointer-events: none;
     }
@@ -149,6 +149,7 @@
       box-shadow: 0 1px 4px rgba(0,0,0,0.6);
       cursor: pointer;
     }
+
     button {
       cursor: pointer;
       display: inline-flex;
@@ -168,6 +169,7 @@
       transform: scale(0.97);
       background: rgba(255, 255, 255, 0.22);
     }
+
     select {
       cursor: pointer;
       display: inline-flex;
@@ -194,6 +196,7 @@
       color: #f8fafc;
       padding: 6px 10px;
     }
+
     .btn-primary {
       background: rgba(14, 165, 233, 0.3) !important;
       border-color: #38bdf8 !important;
@@ -204,11 +207,6 @@
       flex-wrap: wrap;
       gap: 6px;
       pointer-events: auto;
-    }
-    .preset-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 5px;
     }
     .layer-card {
       background: rgba(255, 255, 255, 0.04);
@@ -258,7 +256,7 @@
 
   <div id="ui-container">
     <div id="hud" class="panel">
-      <div>Engine: <span class="hl" id="hud-engine">FM Guilloché Ribbon</span> | Bed: <span class="hl" id="hud-bed">297×210 mm</span></div>
+      <div>Engine: <span class="hl" id="hud-engine">Sacred Chamber</span> | Bed: <span class="hl" id="hud-bed">297×210 mm</span></div>
       <div>Plotted Nodes: <span class="hl" id="hud-nodes">0</span> | Paths: <span class="hl" id="hud-paths">0</span></div>
       <div>Layer Split: <span class="hl" id="hud-layer-split">C00(0) | C01(0) | C02(0)</span></div>
       <div>Pen Travel: <span class="hl" id="hud-dist">0.00 m</span> | Air Liftoff: <span class="hl" id="hud-air">0.00 m</span></div>
@@ -271,62 +269,46 @@
       </div>
 
       <div id="drawer">
-        <div class="sub-heading">Mathematical Sine Presets</div>
-        <div class="preset-grid">
-          <button id="btn-pre-guilloche" class="btn-primary" style="padding:6px 4px; font-size:10px;">🎼 FM Guilloché</button>
-          <button id="btn-pre-chladni" class="btn-primary" style="padding:6px 4px; font-size:10px;">🔔 Chladni Plate</button>
-          <button id="btn-pre-fourier" class="btn-primary" style="padding:6px 4px; font-size:10px;">〰️ Fourier Beats</button>
-          <button id="btn-pre-bessel" class="btn-primary" style="padding:6px 4px; font-size:10px;">🌀 Polar Bessel</button>
+        <div style="display:flex; gap:6px;">
+          <button id="btn-preset-sweeps" class="btn-primary" style="flex:1; padding:7px; font-size:11px;">
+            🌊 Load Sweeping Waves Preset
+          </button>
         </div>
 
-        <div class="sub-heading">Mathematical Wave Engine</div>
-        <select id="engineSelect" style="width:100%; border-color:#38bdf8;">
-          <option value="10" selected>🎼 1. Harmonic Guilloché (FM Sine Wave)</option>
-          <option value="11">🔔 2. Chladni Plate (Cymatic Standing Wave)</option>
-          <option value="12">〰️ 3. Fourier Interference (Orthogonal Beats)</option>
-          <option value="13">🌀 4. Polar Bessel (Harmonic Solitons)</option>
-          <option value="9">🌊 5. Oceanic Swell (Planetary Waves)</option>
-          <option value="8">💎 6. Sacred Chamber (Rhombille & Lace)</option>
-          <option value="0">〰️ 7. Laminar Silk (Low-Octave Warp)</option>
-        </select>
-
-        <div class="slider-row">
-          <div class="slider-header">
-            <span>Harmonic Multiplier (Ratio n:m)</span>
-            <span id="harmonics-num" class="val">3.00</span>
-          </div>
-          <input type="range" id="sl-harmonics" min="1.0" max="8.0" step="0.5" value="3.0">
+        <!-- Touch & Fluid Dynamics -->
+        <div class="sub-heading">Physical Touch & Fluid Dynamics</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+          <span style="font-size:10.5px; color:rgba(255,255,255,0.75);">Influence Dynamic</span>
+          <select id="sl-influence-mode" style="width:170px;">
+            <option value="1" selected>🌊 Water Wake & Ripples</option>
+            <option value="0">🍯 Viscous Fluid Drag</option>
+            <option value="2">🌀 Vortex Whirlpools</option>
+            <option value="3">💥 Acoustic Shockwave</option>
+          </select>
         </div>
 
         <div class="slider-row">
           <div class="slider-header">
-            <span>FM Modulation Coupling (Depth D)</span>
-            <span id="mod-depth-num" class="val">1.20</span>
+            <span>Touch / Pen Influence Intensity</span>
+            <span id="touch-force-num" class="val">1.50x</span>
           </div>
-          <input type="range" id="sl-mod-depth" min="0.0" max="3.0" step="0.05" value="1.20">
+          <input type="range" id="sl-touch-force" min="0.0" max="4.0" step="0.1" value="1.5">
         </div>
 
         <div class="slider-row">
           <div class="slider-header">
-            <span>Spatial Wavelength (Zoom)</span>
-            <span id="scale-num" class="val">0.35 (Wide Wavelength)</span>
+            <span>Ripple Frequency / Scale</span>
+            <span id="ripple-freq-num" class="val">28.0</span>
           </div>
-          <input type="range" id="sl-scale" min="0.08" max="2.50" step="0.02" value="0.35">
+          <input type="range" id="sl-ripple-freq" min="8.0" max="64.0" step="1.0" value="28.0">
         </div>
 
-        <div class="slider-row">
-          <div class="slider-header">
-            <span>Pattern Flow Orientation</span>
-            <span id="flow-angle-num" class="val">0°</span>
-          </div>
-          <input type="range" id="sl-flow-angle" min="-180" max="180" step="1" value="0">
-        </div>
-
+        <!-- Plotter Mode & Bed Configuration -->
         <div class="sub-heading">Plotter Architecture & Canvas Bed</div>
         <div style="display:flex; flex-direction:column; gap:6px;">
           <select id="sl-plot-style" style="width:100%; border-color:#38bdf8;">
-            <option value="ribbons" selected>🌊 Flowing Wave Lines (Plotter Ribbons)</option>
-            <option value="contours">🏔️ Topographical Strata (Isolines)</option>
+            <option value="contours" selected>🏔️ Topographical Strata (Isolines)</option>
+            <option value="ribbons">🌊 Flowing Wave Lines (Plotter Ribbons)</option>
           </select>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
             <select id="sl-view-mode">
@@ -347,21 +329,40 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
           <span style="font-size:10.5px; color:rgba(255,255,255,0.75);">Vector Output Type</span>
           <select id="sl-export-mode" style="width:160px;">
-            <option value="strokes" selected>🖋️ Lines Only (Pen / Cut)</option>
-            <option value="both">⚡ Both (Fills + Lines)</option>
+            <option value="both" selected>⚡ Both (Fills + Lines)</option>
             <option value="fills">🔥 Fills Only (Engrave / Anneal)</option>
+            <option value="strokes">🖋️ Lines Only (Pen / Cut)</option>
+          </select>
+        </div>
+
+        <!-- Boolean Difference Control for Fills -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+          <span style="font-size:10.5px; color:#38bdf8; font-weight:600;">Fill Boolean Mode</span>
+          <select id="sl-fill-boolean" style="width:170px; border-color:#38bdf8;">
+            <option value="diff" selected>✂️️ Difference (Non-Overlapping)</option>
+            <option value="framed">🔲 Difference + Stock Frame</option>
+            <option value="stacked">📚 Stacked (Solid Overlapping)</option>
+          </select>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+          <span style="font-size:10.5px; color:rgba(255,255,255,0.75);">Layer Balancing</span>
+          <select id="sl-norm-mode" style="width:170px;">
+            <option value="equalize" selected>⚖️ Equal-Area 3-Way Split</option>
+            <option value="linear">📏 Linear Min-Max Stretch</option>
+            <option value="raw">⚠ Raw Unnormalized</option>
           </select>
         </div>
 
         <!-- Flowing Wave Ribbons Configuration -->
-        <div id="ribbon-controls-panel">
+        <div id="ribbon-controls-panel" style="display: none;">
           <div class="sub-heading">Sweeping Line Dynamics</div>
           <div class="slider-row">
             <div class="slider-header">
               <span>Wave Displacement (Deflection)</span>
-              <span id="wave-amp-num" class="val">45.0 mm</span>
+              <span id="wave-amp-num" class="val">65.0 mm</span>
             </div>
-            <input type="range" id="sl-wave-amp" min="0.0" max="180.0" step="1.0" value="45.0">
+            <input type="range" id="sl-wave-amp" min="0.0" max="180.0" step="1.0" value="65.0">
           </div>
 
           <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
@@ -381,11 +382,48 @@
           </div>
         </div>
 
+        <!-- Shader Engine & Scale -->
+        <div class="sub-heading">Shader Engine & Wavelength Scale</div>
+        <select id="engineSelect">
+          <option value="8" selected>💎 1. Sacred Chamber (Rhombille Diamonds & Lace)</option>
+          <option value="9">🌊 2. Oceanic Swell (Sweeping Planetary Waves)</option>
+          <option value="0">〰️ 3. Laminar Silk (Broad Low-Octave Warp)</option>
+          <option value="1">🔮 4. Agate Geode (Cellular Voronoi)</option>
+          <option value="2">🌀 5. Curl Nebula (Vortex Filaments)</option>
+          <option value="3">🫧 6. Gyroid Cymatics (Resonance Wave)</option>
+          <option value="7">⚡ 7. 80s Synthwave Grid</option>
+        </select>
+
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Spatial Frequency / Wavelength</span>
+            <span id="scale-num" class="val">1.00</span>
+          </div>
+          <input type="range" id="sl-scale" min="0.08" max="2.50" step="0.02" value="1.00">
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Pattern Flow Direction</span>
+            <span id="flow-angle-num" class="val">0°</span>
+          </div>
+          <input type="range" id="sl-flow-angle" min="-180" max="180" step="1" value="0">
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Displacement Turbulence</span>
+            <span id="warp-num" class="val">0.90</span>
+          </div>
+          <input type="range" id="sl-warp" min="0.0" max="3.5" step="0.05" value="0.90">
+        </div>
+
+        <!-- Density & Quality Controls -->
         <div class="sub-heading">Line Spacing & Splining</div>
         <div class="slider-row">
           <div class="slider-header">
             <span>Line Count / Strata Density</span>
-            <span id="density-num" class="val">24 Lines</span>
+            <span id="density-num" class="val">24 Strata</span>
           </div>
           <input type="range" id="sl-density" min="6" max="90" step="3" value="24">
         </div>
@@ -409,12 +447,13 @@
         <div class="slider-row">
           <div class="slider-header">
             <span>Node Decimation Filter</span>
-            <span id="rdp-num" class="val">0.25</span>
+            <span id="rdp-num" class="val">0.30</span>
           </div>
-          <input type="range" id="sl-rdp" min="0.05" max="1.50" step="0.05" value="0.25">
+          <input type="range" id="sl-rdp" min="0.05" max="1.50" step="0.05" value="0.30">
         </div>
 
-        <div class="sub-heading">Kaleidoscope & Symmetry</div>
+        <!-- Kaleidoscope Corridor -->
+        <div class="sub-heading">Kaleidoscope Corridor</div>
         <div style="margin-bottom: 4px;">
           <select id="sl-k-mode" style="width: 100%;">
             <option value="1" selected>Mirror Symmetry (Corner Vanishing Point)</option>
@@ -424,30 +463,37 @@
 
         <div class="slider-row">
           <div class="slider-header">
-            <span>Petal Count</span>
-            <span id="ksegs-num" class="val">1 (Off - Pure Wave)</span>
+            <span>Petal Count (Odd or Even)</span>
+            <span id="ksegs-num" class="val">6 Petals</span>
           </div>
-          <input type="range" id="sl-k-segs" min="1" max="24" step="1" value="1">
+          <input type="range" id="sl-k-segs" min="1" max="24" step="1" value="6">
         </div>
 
         <div class="slider-row">
           <div class="slider-header">
             <span>Chamber Orientation</span>
-            <span id="kangle-num" class="val">0°</span>
+            <span id="kangle-num" class="val">30°</span>
           </div>
-          <input type="range" id="sl-k-angle" min="0" max="360" step="1" value="0">
+          <input type="range" id="sl-k-angle" min="0" max="360" step="1" value="30">
         </div>
 
-        <!-- Touch / Apple Pencil Fluid Dynamics -->
-        <div class="sub-heading">Stylus / Touch Displacement</div>
         <div class="slider-row">
           <div class="slider-header">
-            <span>Touch / Pen Influence Intensity</span>
-            <span id="touch-force-num" class="val">1.20x</span>
+            <span>Perspective Pinch</span>
+            <span id="kpinch-num" class="val">1.00</span>
           </div>
-          <input type="range" id="sl-touch-force" min="0.0" max="4.0" step="0.1" value="1.2">
+          <input type="range" id="sl-k-pinch" min="0.40" max="2.50" step="0.05" value="1.00">
         </div>
 
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Aperture Zoom</span>
+            <span id="kzoom-num" class="val">1.00</span>
+          </div>
+          <input type="range" id="sl-k-zoom" min="0.30" max="3.00" step="0.05" value="1.00">
+        </div>
+
+        <!-- LightBurn Multi-Layer Matrix -->
         <div class="sub-heading">LightBurn Layer Channels</div>
         <div id="layers-container" style="display:flex; flex-direction:column; gap:6px;"></div>
       </div>
@@ -463,6 +509,9 @@
   </div>
 
   <script>
+    // =========================================================================
+    // 1. LIGHTBURN PALETTE CONFIGURATION & MULTI-LAYER STATE
+    // =========================================================================
     let layersState = [
       { id: 'Shadows_Base',      enabled: true, color: '#000000', lbCode: 'C00', minElev: 0.04, maxElev: 0.32 },
       { id: 'Mid_Strata',        enabled: true, color: '#0000ff', lbCode: 'C01', minElev: 0.36, maxElev: 0.64 },
@@ -484,7 +533,7 @@
             <input type="color" id="col-layer-${idx}" value="${layer.color}">
           </div>
           <div style="display:flex; justify-content:space-between; font-size:10px; color:#94a3b8;">
-            <span>Channel #${idx + 1}</span>
+            <span id="layer-elev-lbl-${idx}">Band: ${(layer.minElev * 100).toFixed(0)}% → ${(layer.maxElev * 100).toFixed(0)}%</span>
             <span>Stroke: <span id="layer-stroke-val-${idx}">${document.getElementById('sl-stroke-width').value}mm</span></span>
           </div>
         `;
@@ -501,6 +550,9 @@
       });
     }
 
+    // =========================================================================
+    // 2. SHADER ENGINE (PHYSICAL FLUID DYNAMICS & 16-BIT ENCODING)
+    // =========================================================================
     const glCanvas = document.getElementById('glcanvas');
     const gl = glCanvas.getContext('webgl2', { preserveDrawingBuffer: true }) || glCanvas.getContext('webgl', { preserveDrawingBuffer: true });
 
@@ -522,7 +574,10 @@
       uniform vec2 u_mouse_vel;
       uniform float u_pressure;
       uniform float u_persistence;
+
+      uniform float u_influence_mode;
       uniform float u_touch_force;
+      uniform float u_ripple_freq;
       uniform float u_time;
 
       uniform float u_k_segs;
@@ -541,6 +596,43 @@
         return vec2(cos(foldA - angleOffset), sin(foldA - angleOffset)) * r;
       }
 
+      vec2 calcImpulse(vec2 st, vec2 targetPos, vec2 vel, float active, float forceMult) {
+        if (active < 0.005) return vec2(0.0);
+        vec2 toTarget = st - targetPos;
+        float d = length(toTarget);
+        vec2 dir = toTarget / (d + 0.001);
+        float speed = length(vel);
+        vec2 impulse = vec2(0.0);
+        float effectiveForce = active * forceMult;
+
+        if (u_influence_mode < 0.5) {
+          float f = exp(-d * 3.4) * effectiveForce;
+          impulse += vel * f * 1.5;
+          vec2 v = vec2(-toTarget.y, toTarget.x) / (d + 0.12);
+          impulse += v * f * 0.85;
+        }
+        else if (u_influence_mode < 1.5) {
+          float wavePhase = (d * u_ripple_freq) - u_time * 6.5;
+          float wave = sin(wavePhase) * exp(-d * 3.5);
+          float wake = exp(-d * 2.8);
+          float forwardDot = max(dot(dir, vel / (speed + 0.001)), -0.3);
+          impulse += dir * (wave * (0.45 + speed * 2.8)) * effectiveForce;
+          impulse += vel * (wake * (0.8 + forwardDot * 0.6)) * effectiveForce;
+        }
+        else if (u_influence_mode < 2.5) {
+          float f = exp(-d * 2.8) * effectiveForce;
+          vec2 vortex = vec2(-toTarget.y, toTarget.x) / (d + 0.09);
+          impulse += vortex * (f * (1.2 + speed * 3.0));
+          impulse += vel * (f * 0.6);
+        }
+        else {
+          float ring = sin(d * u_ripple_freq * 0.6) * exp(-d * 2.5);
+          impulse += dir * (ring * 1.6 + exp(-d * 4.2)) * (0.5 + speed * 3.0) * effectiveForce;
+        }
+
+        return impulse;
+      }
+
       void main() {
         vec2 st = (gl_FragCoord.xy * 2.0 - u_resolution) / min(u_resolution.x, u_resolution.y);
         vec2 impulse = vec2(0.0);
@@ -551,17 +643,7 @@
           vec2 f_prev = foldPoint(u_mouse - u_mouse_vel, u_k_segs, u_k_angle, u_k_mirror);
           vec2 f_vel = f_mouse - f_prev;
 
-          vec2 toTarget = f_st - f_mouse;
-          float d = length(toTarget);
-          vec2 dir = toTarget / (d + 0.001);
-          float speed = length(f_vel);
-          float effectiveForce = u_pressure * u_touch_force;
-
-          float wavePhase = (d * 24.0) - u_time * 6.5;
-          float wave = sin(wavePhase) * exp(-d * 3.5);
-          float wake = exp(-d * 2.8);
-          impulse += dir * (wave * (0.45 + speed * 2.8)) * effectiveForce;
-          impulse += f_vel * (wake * 0.8) * effectiveForce;
+          impulse += calcImpulse(f_st, f_mouse, f_vel, u_pressure, u_touch_force);
         }
 
         vec2 uvDelta = impulse * 0.006;
@@ -578,13 +660,57 @@
       uniform float u_time;
       uniform float u_shader_type;
       uniform float u_scale;
-      uniform float u_harmonics;
-      uniform float u_mod_depth;
+      uniform float u_warp_scale;
       uniform float u_flow_angle;
       uniform float u_k_segs;
       uniform float u_k_angle;
+      uniform float u_k_pinch;
+      uniform float u_k_zoom;
       uniform float u_k_mirror;
       uniform float u_encode_16bit;
+
+      vec2 hash(vec2 p) {
+        p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+        return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
+      }
+
+      float noise(vec2 p) {
+        const float K1 = 0.366025404;
+        const float K2 = 0.211324865;
+        vec2 i = floor(p + (p.x + p.y) * K1);
+        vec2 a = p - i + (i.x + i.y) * K2;
+        vec2 o = (a.x > a.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+        vec2 b = a - o + K2;
+        vec2 c = a - 1.0 + 2.0 * K2;
+        vec3 h = max(0.5 - vec3(dot(a, a), dot(b, b), dot(c, c)), 0.0);
+        vec3 n = h * h * h * h * vec3(dot(a, hash(i + 0.0)), dot(b, hash(i + o)), dot(c, hash(i + 1.0)));
+        return dot(n, vec3(70.0));
+      }
+
+      float fbm(vec2 p) {
+        float f = 0.0;
+        float amp = 0.5;
+        const mat2 rot = mat2(0.96, 0.26, -0.26, 0.96);
+        for (int i = 0; i < 4; i++) {
+          f += amp * noise(p);
+          p = rot * p * 1.85;
+          amp *= 0.5;
+        }
+        return f;
+      }
+
+      vec3 rhombilleDiamonds(vec2 p) {
+        vec2 s = vec2(1.7320508, 1.0);
+        vec2 a = mod(p, s) - s * 0.5;
+        vec2 b = mod(p - s * 0.5, s) - s * 0.5;
+        vec2 g = dot(a, a) < dot(b, b) ? a : b;
+        float angle = atan(g.y, g.x + 1e-5) + 3.14159265;
+        float sector = floor(mod(angle / 1.04719755, 6.0));
+        float facetID = mod(sector, 3.0);
+        vec2 diamondUV = abs(g);
+        float dEdge = max(diamondUV.x * 0.5 + diamondUV.y * 0.866025, diamondUV.x);
+        return vec3(facetID, 1.0 - smoothstep(0.44, 0.49, dEdge), dEdge);
+      }
 
       void main() {
         vec2 raw_st = (gl_FragCoord.xy * 2.0 - u_resolution) / min(u_resolution.x, u_resolution.y);
@@ -598,61 +724,67 @@
           if (modA < 0.0) modA += segAngle;
           float H = segAngle * 0.5;
           float foldA = (u_k_mirror > 0.5) ? abs(modA - H) : modA;
-          st = vec2(cos(foldA), sin(foldA)) * r;
+
+          float rP = pow(max(r, 0.0001), u_k_pinch) * u_k_zoom;
+          st = vec2(cos(foldA), sin(foldA)) * rP;
 
           vec2 foldedScreenST = vec2(cos(foldA - u_k_angle), sin(foldA - u_k_angle)) * r;
           vec2 simUV = (foldedScreenST * min(u_resolution.x, u_resolution.y) + u_resolution) / (2.0 * u_resolution);
           vec2 paint = texture2D(u_simTexture, clamp(simUV, 0.001, 0.999)).xy;
           st += paint * 0.8;
         } else {
+          float r = length(st);
+          if (abs(u_k_pinch - 1.0) > 0.005 || abs(u_k_zoom - 1.0) > 0.005) {
+            float a = atan(st.y, st.x + 1e-5);
+            float rP = pow(max(r, 0.0001), u_k_pinch) * u_k_zoom;
+            st = vec2(cos(a), sin(a)) * rP;
+          }
           vec2 paint = texture2D(u_simTexture, v_uv).xy;
           st += paint * 0.8;
         }
 
         float rad = u_flow_angle;
         mat2 rotFlow = mat2(cos(rad), sin(rad), -sin(rad), cos(rad));
-        vec2 p = rotFlow * (st * u_scale * 6.2831853);
+        vec2 p = rotFlow * (st * u_scale * 2.0);
 
-        float f = 0.5;
+        float f = 0.0;
 
-        if (u_shader_type >= 9.5 && u_shader_type < 10.5) {
-          // 1. FM Harmonic Guilloché Ribbon (Frequency-Modulated Sine Waves)
-          float fmCarrierX = sin(p.x + sin(p.y * u_harmonics) * u_mod_depth + u_time * 0.15);
-          float fmCarrierY = cos(p.y + cos(p.x * u_harmonics) * u_mod_depth - u_time * 0.12);
-          f = (fmCarrierX * fmCarrierY) * 0.5 + 0.5;
+        if (u_shader_type > 8.5) {
+          vec2 warpOffset = vec2(fbm(p * 0.6 + vec2(0.0, u_time * 0.05)), fbm(p * 0.6 + vec2(3.1, 1.4))) * u_warp_scale;
+          vec2 pw = p + warpOffset;
+
+          float wave1 = sin(pw.x * 1.5 + u_time * 0.15 + sin(pw.y * 0.8));
+          float wave2 = sin(pw.x * 0.75 - pw.y * 1.1 + u_time * 0.1);
+          float wave3 = cos(length(pw * 0.8) * 1.6 - u_time * 0.08);
+
+          f = (wave1 * 0.45 + wave2 * 0.35 + wave3 * 0.20) * 0.5 + 0.5;
+          f += (fbm(pw * 0.5) - 0.5) * 0.35 * u_warp_scale;
         }
-        else if (u_shader_type >= 10.5 && u_shader_type < 11.5) {
-          // 2. Chladni Acoustic Plate Resonator
-          float n = u_harmonics;
-          float m = u_harmonics + 1.0;
-          float c1 = cos(n * p.x) * cos(m * p.y);
-          float c2 = cos(m * p.x) * cos(n * p.y);
-          f = (c1 - c2) * 0.25 + 0.5;
-        }
-        else if (u_shader_type >= 11.5 && u_shader_type < 12.5) {
-          // 3. Fourier Beat Interference (Orthogonal Harmonics)
-          float w1 = sin(p.x + u_time * 0.2);
-          float w2 = sin(p.x * u_harmonics - u_time * 0.1);
-          float w3 = cos(p.y * 1.5 + cos(p.x * 0.8) * u_mod_depth);
-          f = (w1 * 0.4 + w2 * 0.3 + w3 * 0.3) * 0.5 + 0.5;
-        }
-        else if (u_shader_type >= 12.5) {
-          // 4. Polar Bessel Harmonics
-          float r = length(p);
-          float theta = atan(p.y, p.x + 1e-5);
-          float besselWave = cos(r * 2.0 - u_time * 0.2);
-          float polarHarm = cos(theta * u_harmonics);
-          f = (besselWave * polarHarm) * 0.5 + 0.5;
-        }
-        else if (u_shader_type >= 8.5 && u_shader_type < 9.5) {
-          // 5. Oceanic Swell
-          float wave1 = sin(p.x * 0.5 + u_time * 0.15 + sin(p.y * 0.3) * u_mod_depth);
-          float wave2 = sin(p.x * 0.25 - p.y * 0.4 + u_time * 0.1);
-          f = (wave1 * 0.55 + wave2 * 0.45) * 0.5 + 0.5;
-        }
-        else {
-          // Fallback simple sine grid
-          f = (sin(p.x) * cos(p.y)) * 0.5 + 0.5;
+        else if (u_shader_type < 0.5) {
+          vec2 q = vec2(fbm(p + vec2(0.0, u_time * 0.05)), fbm(p + vec2(5.2, 1.3)));
+          vec2 r = vec2(fbm(p + 1.2 * q + vec2(1.7, 9.2)), fbm(p + 1.2 * q + vec2(8.3, 2.8)));
+          f = fbm(p + u_warp_scale * r);
+        } else if (u_shader_type < 1.5) {
+          vec2 g = fract(p * 2.0) - 0.5;
+          f = length(g) + 0.3 * fbm(p * 2.5);
+        } else if (u_shader_type < 2.5) {
+          vec2 c = vec2(fbm(p * 1.2 + vec2(0.0, u_time * 0.1)), fbm(p * 1.2 + vec2(4.1, 2.8)));
+          f = fbm(p + u_warp_scale * c);
+        } else if (u_shader_type < 3.5) {
+          vec2 gp = p * 3.0;
+          float gVal = sin(gp.x) * cos(gp.y) + sin(gp.y);
+          f = 0.5 + 0.5 * gVal + 0.2 * fbm(p * 2.0);
+        } else if (u_shader_type < 7.5) {
+          vec2 grid = abs(fract(p * 3.5) - 0.5);
+          f = max(1.0 - smoothstep(0.0, 0.08, grid.x), 1.0 - smoothstep(0.0, 0.08, grid.y)) + 0.2 * fbm(p);
+        } else {
+          float radDist = length(p);
+          float polar = atan(p.y, p.x + 1e-5);
+          vec2 kDist = vec2(fbm(p * 1.8), fbm(p * 1.8 + vec2(3.1, 1.7))) * (u_warp_scale * 0.25);
+          vec3 rBlocks = rhombilleDiamonds((p + kDist) * 3.5);
+          float facet = (rBlocks.x < 0.5) ? 0.9 : ((rBlocks.x < 1.5) ? 0.6 : 0.3);
+          float filigree = abs(sin(radDist * 18.0 + sin(polar * 8.0) * 0.5));
+          f = mix(filigree, facet + rBlocks.y * 0.4, 0.65);
         }
 
         float lum = clamp(f, 0.0, 1.0);
@@ -750,6 +882,9 @@
       scheduleVectorTrace();
     });
 
+    // =========================================================================
+    // 3. EQUAL-AREA CDF NORMALIZER & TOPOLOGICAL SPLINE EXTRACTION
+    // =========================================================================
     const vCanvas = document.getElementById('vectorPreviewCanvas');
     const vCtx = vCanvas.getContext('2d');
     let extractedVectorLayers = [];
@@ -787,6 +922,51 @@
       }
     }
 
+    function normalizeScalarGrid(grid, length, mode = 'equalize') {
+      if (mode === 'raw') return;
+
+      let minVal = Infinity, maxVal = -Infinity;
+      for (let i = 0; i < length; i++) {
+        const v = grid[i];
+        if (v < minVal) minVal = v;
+        if (v > maxVal) maxVal = v;
+      }
+
+      const range = maxVal - minVal;
+      if (range < 1e-6) return;
+
+      if (mode === 'linear') {
+        for (let i = 0; i < length; i++) {
+          grid[i] = (grid[i] - minVal) / range;
+        }
+        return;
+      }
+
+      const BINS = 2048;
+      const hist = new Uint32Array(BINS);
+      for (let i = 0; i < length; i++) {
+        const bin = Math.min(BINS - 1, Math.max(0, Math.floor(((grid[i] - minVal) / range) * BINS)));
+        hist[bin]++;
+      }
+
+      const cdf = new Float32Array(BINS);
+      let cum = 0;
+      for (let b = 0; b < BINS; b++) {
+        cum += hist[b];
+        cdf[b] = cum / length;
+      }
+
+      for (let i = 0; i < length; i++) {
+        const rawT = (grid[i] - minVal) / range;
+        const bin = Math.min(BINS - 1, Math.max(0, Math.floor(rawT * BINS)));
+        const frac = (rawT * BINS) - bin;
+        const c0 = (bin > 0) ? cdf[bin - 1] : 0.0;
+        const c1 = cdf[bin];
+        grid[i] = c0 + (c1 - c0) * Math.max(0.0, Math.min(1.0, frac));
+      }
+    }
+
+    // True Periodic Circular Smoothing for Watertight Loops
     function smoothPolyline(pts, passes, isClosed) {
       if (pts.length < 3 || passes <= 0) return pts;
       let cur = pts.slice();
@@ -855,8 +1035,13 @@
 
         for (let i = start + 1; i < end; i++) {
           const p = pts[i];
-          let distSq = (lenSq === 0) ? ((p.x - p1.x)**2 + (p.y - p1.y)**2) :
-            ((dy * p.x - dx * p.y + p2.x * p1.y - p2.y * p1.x)**2) / lenSq;
+          let distSq = 0;
+          if (lenSq === 0) {
+            distSq = (p.x - p1.x) ** 2 + (p.y - p1.y) ** 2;
+          } else {
+            const num = (dy * p.x - dx * p.y + p2.x * p1.y - p2.y * p1.x);
+            distSq = (num * num) / lenSq;
+          }
           if (distSq > maxDistSq) {
             maxDistSq = distSq;
             maxIdx = i;
@@ -898,7 +1083,10 @@
           const cp1y = oy + (h - (pCurr.y + (pNext.y - pPrev.y) / 6.0)) * scale;
           const cp2x = ox + (pNext.x - (pNext2.x - pCurr.x) / 6.0) * scale;
           const cp2y = oy + (h - (pNext.y - (pNext2.y - pCurr.y) / 6.0)) * scale;
-          ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, ox + pNext.x * scale, oy + (h - pNext.y) * scale);
+          const targetX = ox + pNext.x * scale;
+          const targetY = oy + (h - pNext.y) * scale;
+
+          ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, targetX, targetY);
         }
         ctx.closePath();
       } else {
@@ -912,7 +1100,10 @@
           const cp1y = oy + (h - (pCurr.y + (pNext.y - pPrev.y) / 6.0)) * scale;
           const cp2x = ox + (pNext.x - (pNext2.x - pCurr.x) / 6.0) * scale;
           const cp2y = oy + (h - (pNext.y - (pNext2.y - pCurr.y) / 6.0)) * scale;
-          ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, ox + pNext.x * scale, oy + (h - pNext.y) * scale);
+          const targetX = ox + pNext.x * scale;
+          const targetY = oy + (h - pNext.y) * scale;
+
+          ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, targetX, targetY);
         }
       }
     }
@@ -940,6 +1131,7 @@
           const cp2y = (oy + (h - (pNext.y - (pNext2.y - pCurr.y) / 6.0)) * scale).toFixed(3);
           const targetX = (ox + pNext.x * scale).toFixed(3);
           const targetY = (oy + (h - pNext.y) * scale).toFixed(3);
+
           d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${targetX} ${targetY}`;
         }
         d += ' Z';
@@ -950,12 +1142,13 @@
           const pNext  = pts[i + 1];
           const pNext2 = (i + 2 < n) ? pts[i + 2] : pts[i + 1];
 
-          const cp1x = ((ox + (pCurr.x + (pNext.x - pPrev.x) / 6.0) * scale)).toFixed(3);
-          const cp1y = ((oy + (h - (pCurr.y + (pNext.y - pPrev.y) / 6.0)) * scale)).toFixed(3);
-          const cp2x = ((ox + (pNext.x - (pNext2.x - pCurr.x) / 6.0) * scale)).toFixed(3);
-          const cp2y = ((oy + (h - (pNext.y - (pNext2.y - pCurr.y) / 6.0)) * scale)).toFixed(3);
-          const targetX = (ox + pNext.x * scale).toFixed(3);
-          const targetY = (oy + (h - pNext.y) * scale).toFixed(3);
+          const cp1x = ((pCurr.x + (pNext.x - pPrev.x) / 6.0) * scale).toFixed(3);
+          const cp1y = ((h - (pCurr.y + (pNext.y - pPrev.y) / 6.0)) * scale).toFixed(3);
+          const cp2x = ((pNext.x - (pNext2.x - pCurr.x) / 6.0) * scale).toFixed(3);
+          const cp2y = ((h - (pNext.y - (pNext2.y - pCurr.y) / 6.0)) * scale).toFixed(3);
+          const targetX = (pNext.x * scale).toFixed(3);
+          const targetY = ((h - pNext.y) * scale).toFixed(3);
+
           d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${targetX} ${targetY}`;
         }
       }
@@ -969,10 +1162,15 @@
       const x1 = Math.min(w - 1, x0 + 1), y1 = Math.min(h - 1, y0 + 1);
       const wx = cx - x0, wy = cy - y0;
 
-      return (1.0 - wx) * (1.0 - wy) * grid[y0 * w + x0] +
-             wx * (1.0 - wy) * grid[y0 * w + x1] +
-             (1.0 - wx) * wy * grid[y1 * w + x0] +
-             wx * wy * grid[y1 * w + x1];
+      const v00 = grid[y0 * w + x0];
+      const v10 = grid[y0 * w + x1];
+      const v01 = grid[y1 * w + x0];
+      const v11 = grid[y1 * w + x1];
+
+      return (1.0 - wx) * (1.0 - wy) * v00 +
+             wx * (1.0 - wy) * v10 +
+             (1.0 - wx) * wy * v01 +
+             wx * wy * v11;
     }
 
     function generateDisplacedRibbons(grid, w, h, bedW_mm, numLines, amp_mm, angleDeg, isBipolar) {
@@ -988,7 +1186,7 @@
       const ampGrid = amp_mm * mmToGridScale;
 
       const lines = [];
-      const margin = 0.04;
+      const margin = 0.03;
       const spanX = w * (1.0 - 2.0 * margin);
       const spanY = h * (1.0 - 2.0 * margin);
 
@@ -1012,16 +1210,157 @@
           const elevation = sampleGridBilinear(grid, w, h, rx, ry);
           const defl = isBipolar ? ((elevation - 0.5) * 2.0) : elevation;
 
-          pts.push({
-            x: rx + nx * (defl * ampGrid),
-            y: ry + ny * (defl * ampGrid)
-          });
+          const px = rx + nx * (defl * ampGrid);
+          const py = ry + ny * (defl * ampGrid);
+
+          pts.push({ x: px, y: py });
         }
         lines.push({ pts: pts, isClosed: false });
       }
       return lines;
     }
 
+    function extractContoursFast(grid, w, h, threshold) {
+      const segments = [];
+      const lerp = (p0, p1, v0, v1) => {
+        const d = v1 - v0;
+        if (Math.abs(d) < 1e-7) return p0;
+        return p0 + ((threshold - v0) / d) * (p1 - p0);
+      };
+
+      for (let y = 0; y < h - 1; y++) {
+        const row = y * w;
+        const nextRow = (y + 1) * w;
+        for (let x = 0; x < w - 1; x++) {
+          const bl = grid[row + x];
+          const br = grid[row + x + 1];
+          const tr = grid[nextRow + x + 1];
+          const tl = grid[nextRow + x];
+
+          let c = 0;
+          if (bl >= threshold) c |= 1;
+          if (br >= threshold) c |= 2;
+          if (tr >= threshold) c |= 4;
+          if (tl >= threshold) c |= 8;
+          if (c === 0 || c === 15) continue;
+
+          const ptB = { x: lerp(x, x + 1, bl, br), y: y };
+          const ptR = { x: x + 1, y: lerp(y, y + 1, br, tr) };
+          const ptT = { x: lerp(x, x + 1, tl, tr), y: y + 1 };
+          const ptL = { x: x, y: lerp(y, y + 1, bl, tl) };
+
+          const eB = { key: `H:${x},${y}`,     pt: ptB };
+          const eR = { key: `V:${x + 1},${y}`, pt: ptR };
+          const eT = { key: `H:${x},${y + 1}`, pt: ptT };
+          const eL = { key: `V:${x},${y}`,     pt: ptL };
+
+          switch (c) {
+            case 1:  case 14: segments.push([eL, eB]); break;
+            case 2:  case 13: segments.push([eB, eR]); break;
+            case 3:  case 12: segments.push([eL, eR]); break;
+            case 4:  case 11: segments.push([eT, eR]); break;
+            case 5:
+              segments.push([eL, eT]);
+              segments.push([eB, eR]);
+              break;
+            case 6:  case 9:  segments.push([eB, eT]); break;
+            case 7:  case 8:  segments.push([eL, eT]); break;
+            case 10:
+              segments.push([eL, eB]);
+              segments.push([eT, eR]);
+              break;
+          }
+        }
+      }
+
+      if (segments.length === 0) return [];
+
+      const adj = new Map();
+      for (let i = 0; i < segments.length; i++) {
+        const e1 = segments[i][0];
+        const e2 = segments[i][1];
+        if (e1.key === e2.key) continue;
+
+        let n1 = adj.get(e1.key);
+        if (!n1) { n1 = { pt: e1.pt, nbrs: [] }; adj.set(e1.key, n1); }
+        let n2 = adj.get(e2.key);
+        if (!n2) { n2 = { pt: e2.pt, nbrs: [] }; adj.set(e2.key, n2); }
+
+        n1.nbrs.push({ key: e2.key, pt: e2.pt });
+        n2.nbrs.push({ key: e1.key, pt: e1.pt });
+      }
+
+      const visitedEdges = new Set();
+      const extracted = [];
+
+      for (const [startKey, startNode] of adj.entries()) {
+        for (let e = 0; e < startNode.nbrs.length; e++) {
+          const firstNbr = startNode.nbrs[e];
+          const edgeId = `${startKey}->${firstNbr.key}`;
+          const edgeIdRev = `${firstNbr.key}->${startKey}`;
+          if (visitedEdges.has(edgeId) || visitedEdges.has(edgeIdRev)) continue;
+
+          visitedEdges.add(edgeId);
+          visitedEdges.add(edgeIdRev);
+
+          const polyline = [startNode.pt, firstNbr.pt];
+          let curKey = firstNbr.key;
+          let isClosed = false;
+
+          while (true) {
+            const curNode = adj.get(curKey);
+            if (!curNode) break;
+
+            let nextCand = null;
+            for (let j = 0; j < curNode.nbrs.length; j++) {
+              const cand = curNode.nbrs[j];
+              const cEdge = `${curKey}->${cand.key}`;
+              const cEdgeRev = `${cand.key}->${curKey}`;
+              if (!visitedEdges.has(cEdge) && !visitedEdges.has(cEdgeRev)) {
+                visitedEdges.add(cEdge);
+                visitedEdges.add(cEdgeRev);
+                nextCand = cand;
+                break;
+              }
+            }
+
+            if (nextCand) {
+              polyline.push(nextCand.pt);
+              curKey = nextCand.key;
+              if (curKey === startKey) {
+                isClosed = true;
+                break;
+              }
+            } else {
+              break;
+            }
+          }
+
+          if (polyline.length >= 2) {
+            if (isClosed) {
+              polyline[polyline.length - 1] = { x: polyline[0].x, y: polyline[0].y };
+            }
+            extracted.push({ pts: polyline, isClosed });
+          }
+        }
+      }
+      return extracted;
+    }
+
+    function processClosedLoops(rawLoops, rdpVal, smoothPasses) {
+      const out = [];
+      rawLoops.forEach(item => {
+        if (!item.isClosed) return;
+        const preFiltered = rdpPreFilter(item.pts, rdpVal * 0.18);
+        const smoothed = smoothPolyline(preFiltered, smoothPasses, true);
+        if (smoothed.length >= 3) {
+          out.push({ pts: smoothed, isClosed: true });
+        }
+      });
+      return out;
+    }
+
+    // Trace vectors with Perimeter-Clamped Watertight Geometry and Compound Difference Fills
     function traceVectorContours() {
       const [bedW, bedH] = document.getElementById('sl-bed-size').value.split(',').map(Number);
       document.getElementById('hud-bed').textContent = `${bedW}×${bedH} mm`;
@@ -1058,11 +1397,12 @@
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_time'), performance.now() * 0.001);
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_shader_type'), parseFloat(document.getElementById('engineSelect').value));
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_scale'), parseFloat(document.getElementById('sl-scale').value));
-      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_harmonics'), parseFloat(document.getElementById('sl-harmonics').value));
-      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_mod_depth'), parseFloat(document.getElementById('sl-mod-depth').value));
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_warp_scale'), parseFloat(document.getElementById('sl-warp').value));
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_flow_angle'), (parseFloat(document.getElementById('sl-flow-angle').value) * Math.PI) / 180.0);
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_segs'), parseFloat(document.getElementById('sl-k-segs').value));
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_angle'), (parseFloat(document.getElementById('sl-k-angle').value) * Math.PI) / 180.0);
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_pinch'), parseFloat(document.getElementById('sl-k-pinch').value));
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_zoom'), parseFloat(document.getElementById('sl-k-zoom').value));
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_mirror'), parseFloat(document.getElementById('sl-k-mode').value));
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_encode_16bit'), 1.0);
 
@@ -1079,11 +1419,26 @@
         grid[i] = (hi * 256.0 + lo) / 65535.0;
       }
 
-      blurScalarGrid(grid, tW, tH, 1);
+      // Smooth noise, then normalize scalar elevation domain
+      blurScalarGrid(grid, tW, tH, 2);
+      const normMode = document.getElementById('sl-norm-mode').value;
+      normalizeScalarGrid(grid, tW * tH, normMode);
 
+      // CLAMP OUTER PERIMETER: Ensures all contours close without dropping
+      for (let x = 0; x < tW; x++) {
+        grid[x] = 0.0;
+        grid[(tH - 1) * tW + x] = 0.0;
+      }
+      for (let y = 0; y < tH; y++) {
+        grid[y * tW] = 0.0;
+        grid[y * tW + (tW - 1)] = 0.0;
+      }
+
+      const plotStyle = document.getElementById('sl-plot-style').value;
       const totalDensity = parseInt(document.getElementById('sl-density').value);
       const rdpVal = parseFloat(document.getElementById('sl-rdp').value);
       const smoothPasses = parseInt(document.getElementById('sl-smoothness').value);
+      const fillBooleanMode = document.getElementById('sl-fill-boolean').value;
       extractedVectorLayers = [];
 
       let totalNodes = 0;
@@ -1091,40 +1446,138 @@
       let penDownDist = 0;
       let penUpDist = 0;
 
-      const amp_mm = parseFloat(document.getElementById('sl-wave-amp').value);
-      const angleDeg = parseFloat(document.getElementById('sl-wave-angle').value);
-      const isBipolar = document.getElementById('sl-deflection-center').value === 'bipolar';
-      const allRibbons = generateDisplacedRibbons(grid, tW, tH, bedW, totalDensity, amp_mm, angleDeg, isBipolar);
-
       const activeLayers = layersState.filter(l => l.enabled);
-      if (activeLayers.length > 0) {
-        activeLayers.forEach(l => {
-          extractedVectorLayers.push({
-            id: l.id,
-            lbCode: l.lbCode,
-            color: l.color,
-            strokeItems: [],
-            fillLoops: [],
-            traceW: tW,
-            traceH: tH
-          });
-        });
+      const numActive = activeLayers.length;
 
-        allRibbons.forEach((ribbon, idx) => {
-          const preFiltered = rdpPreFilter(ribbon.pts, rdpVal * 0.18);
-          const smoothed = smoothPolyline(preFiltered, smoothPasses, false);
-          if (smoothed.length >= 2) {
-            const targetLayer = extractedVectorLayers[idx % extractedVectorLayers.length];
-            targetLayer.strokeItems.push({ pts: smoothed, isClosed: false });
+      if (plotStyle === 'ribbons') {
+        const amp_mm = parseFloat(document.getElementById('sl-wave-amp').value);
+        const angleDeg = parseFloat(document.getElementById('sl-wave-angle').value);
+        const isBipolar = document.getElementById('sl-deflection-center').value === 'bipolar';
+        const allRibbons = generateDisplacedRibbons(grid, tW, tH, bedW, totalDensity, amp_mm, angleDeg, isBipolar);
+
+        if (numActive > 0) {
+          activeLayers.forEach(l => {
+            extractedVectorLayers.push({
+              id: l.id,
+              lbCode: l.lbCode,
+              color: l.color,
+              strokeItems: [],
+              fillLoops: [],
+              traceW: tW,
+              traceH: tH
+            });
+          });
+
+          allRibbons.forEach((ribbon, idx) => {
+            const preFiltered = rdpPreFilter(ribbon.pts, rdpVal * 0.18);
+            const smoothed = smoothPolyline(preFiltered, smoothPasses, false);
+            if (smoothed.length >= 2) {
+              const targetLayer = extractedVectorLayers[idx % extractedVectorLayers.length];
+              targetLayer.strokeItems.push({ pts: smoothed, isClosed: false });
+            }
+          });
+        }
+      } else {
+        if (numActive > 0) {
+          const strataPerLayer = Math.max(2, Math.floor(totalDensity / numActive));
+
+          // 1. Equalized Threshold Boundaries for the 3 Channels
+          const tierThresholds = [];
+          for (let k = 0; k < numActive; k++) {
+            if (normMode === 'equalize') {
+              const bandMargin = 0.04;
+              const bandWidth = (1.0 - bandMargin * 2.0) / numActive;
+              tierThresholds.push(bandMargin + k * bandWidth);
+            } else {
+              tierThresholds.push(activeLayers[k].minElev);
+            }
           }
-        });
+
+          // 2. Extract Master Watertight Loops for every Tier
+          const masterTierLoops = [];
+          for (let k = 0; k < numActive; k++) {
+            const raw = extractContoursFast(grid, tW, tH, tierThresholds[k]);
+            masterTierLoops.push(processClosedLoops(raw, rdpVal, smoothPasses));
+          }
+
+          // 3. Construct Boolean Difference Bands & Scoring Contours
+          activeLayers.forEach((layer, kIdx) => {
+            const minE = tierThresholds[kIdx];
+            const maxE = (kIdx < numActive - 1) ? tierThresholds[kIdx + 1] : 0.96;
+
+            const lbl = document.getElementById(`layer-elev-lbl-${layersState.indexOf(layer)}`);
+            if (lbl) lbl.textContent = `Band: ${(minE * 100).toFixed(0)}% → ${(maxE * 100).toFixed(0)}% (${strataPerLayer} strata)`;
+
+            // A. Continuous Isoline Strokes
+            const layerStrokes = [];
+            for (let s = 0; s < strataPerLayer; s++) {
+              const frac = (strataPerLayer === 1) ? 0.5 : (s / (strataPerLayer - 1));
+              const th = minE + frac * (maxE - minE);
+              const rawContourItems = extractContoursFast(grid, tW, tH, th);
+
+              rawContourItems.forEach(item => {
+                const preFiltered = rdpPreFilter(item.pts, rdpVal * 0.18);
+                const smoothed = smoothPolyline(preFiltered, smoothPasses, item.isClosed);
+                if (smoothed.length >= 2) {
+                  layerStrokes.push({ pts: smoothed, isClosed: item.isClosed });
+                }
+              });
+            }
+
+            // B. Watertight Mutually Exclusive Boolean Difference Fill Loops
+            let layerFills = [];
+
+            if (fillBooleanMode === 'diff') {
+              if (kIdx === numActive - 1) {
+                // Top Layer (C02): Plateaus >= T2
+                layerFills = masterTierLoops[kIdx];
+              } else {
+                // Mid & Base Layers: Outer loops of this tier + inner cutout loops of the tier above
+                layerFills = [...masterTierLoops[kIdx], ...masterTierLoops[kIdx + 1]];
+              }
+            } else if (fillBooleanMode === 'framed') {
+              if (kIdx === numActive - 1) {
+                layerFills = masterTierLoops[kIdx];
+              } else if (kIdx === 0) {
+                // Base layer frames the entire physical stock, cut out by Tier 1
+                const frameLoop = {
+                  pts: [
+                    { x: 1, y: 1 },
+                    { x: tW - 2, y: 1 },
+                    { x: tW - 2, y: tH - 2 },
+                    { x: 1, y: tH - 2 },
+                    { x: 1, y: 1 }
+                  ],
+                  isClosed: true
+                };
+                layerFills = [frameLoop, ...masterTierLoops[1]];
+              } else {
+                layerFills = [...masterTierLoops[kIdx], ...masterTierLoops[kIdx + 1]];
+              }
+            } else {
+              // 'stacked': Solid cumulative fills
+              layerFills = masterTierLoops[kIdx];
+            }
+
+            extractedVectorLayers.push({
+              id: layer.id,
+              lbCode: layer.lbCode,
+              color: layer.color,
+              strokeItems: layerStrokes,
+              fillLoops: layerFills,
+              traceW: tW,
+              traceH: tH
+            });
+          });
+        }
       }
 
+      // Live Telemetry Readouts
       let prevEnd = null;
       const splitStats = [];
 
       extractedVectorLayers.forEach(layer => {
-        splitStats.push(`${layer.lbCode}(${layer.strokeItems.length}L)`);
+        splitStats.push(`${layer.lbCode}(${layer.strokeItems.length}L/${layer.fillLoops.length}F)`);
         layer.strokeItems.forEach(it => {
           totalPaths++;
           totalNodes += it.pts.length;
@@ -1151,6 +1604,7 @@
       const viewMode = document.getElementById('sl-view-mode').value;
       if (viewMode === 'shader') return;
 
+      const exportMode = document.getElementById('sl-export-mode').value;
       const bedW = currentBed.w_mm;
       const bedH = currentBed.h_mm;
 
@@ -1185,16 +1639,32 @@
 
       extractedVectorLayers.forEach(layer => {
         const strokeColor = (viewMode === 'blueprint') ? '#38bdf8' : layer.color;
-        vCtx.strokeStyle = strokeColor;
-        vCtx.lineWidth = Math.max(1.0, parseFloat(document.getElementById('sl-stroke-width').value) * 1.5);
-        vCtx.lineCap = 'round';
-        vCtx.lineJoin = 'round';
 
-        layer.strokeItems.forEach(it => {
-          vCtx.beginPath();
-          addBezierPolySubpath(vCtx, it.pts, it.isClosed, gridToScreenScale, bedScreenX, bedScreenY, tH);
-          vCtx.stroke();
-        });
+        // Render Boolean Fills
+        if (exportMode === 'fills' || exportMode === 'both') {
+          if (layer.fillLoops && layer.fillLoops.length > 0) {
+            vCtx.fillStyle = (viewMode === 'blueprint') ? 'rgba(56, 189, 248, 0.28)' : `${layer.color}66`;
+            vCtx.beginPath();
+            layer.fillLoops.forEach(it => {
+              addBezierPolySubpath(vCtx, it.pts, true, gridToScreenScale, bedScreenX, bedScreenY, tH);
+            });
+            vCtx.fill('evenodd');
+          }
+        }
+
+        // Render Strokes
+        if (exportMode === 'strokes' || exportMode === 'both') {
+          vCtx.strokeStyle = strokeColor;
+          vCtx.lineWidth = Math.max(1.0, parseFloat(document.getElementById('sl-stroke-width').value) * 1.5);
+          vCtx.lineCap = 'round';
+          vCtx.lineJoin = 'round';
+
+          layer.strokeItems.forEach(it => {
+            vCtx.beginPath();
+            addBezierPolySubpath(vCtx, it.pts, it.isClosed, gridToScreenScale, bedScreenX, bedScreenY, tH);
+            vCtx.stroke();
+          });
+        }
       });
     }
 
@@ -1204,6 +1674,9 @@
       traceTimer = setTimeout(traceVectorContours, 120);
     }
 
+    // =========================================================================
+    // 4. LIGHTBURN DIRECT SVG MULTI-LAYER EXPORTER (NON-OVERLAPPING CHANNELS)
+    // =========================================================================
     function exportLightBurnSVG() {
       if (extractedVectorLayers.length === 0) traceVectorContours();
 
@@ -1212,26 +1685,57 @@
       const tW = currentBed.traceW;
       const tH = currentBed.traceH;
       const strokeMm = parseFloat(document.getElementById('sl-stroke-width').value);
+      const exportMode = document.getElementById('sl-export-mode').value;
 
       const isoScale = bedW / tW;
       const ox = (bedW - tW * isoScale) * 0.5;
       const oy = (bedH - tH * isoScale) * 0.5;
 
       let svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n`;
-      svg += `<!-- LightBurn Harmonic Plotter SVG Generated by VectorK1 Studio -->\n`;
+      svg += `<!-- LightBurn Isotropic Boolean Difference SVG Generated by VectorK1 Studio -->\n`;
       svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${bedW}mm" height="${bedH}mm" viewBox="0 0 ${bedW} ${bedH}">\n`;
 
-      extractedVectorLayers.forEach(layer => {
-        if (layer.strokeItems && layer.strokeItems.length > 0) {
-          let strokePathD = '';
-          layer.strokeItems.forEach(it => {
-            strokePathD += bezierPathD(it.pts, it.isClosed, isoScale, ox, oy, tH) + ' ';
-          });
+      // Palette for cut-line channel separation in "Both" mode
+      const LINE_CODES = [
+        { code: 'C03', col: '#00e000' },
+        { code: 'C04', col: '#d000d0' },
+        { code: 'C05', col: '#00d0d0' }
+      ];
 
-          if (strokePathD.length > 0) {
-            svg += `  <g id="${layer.lbCode}_Line_${layer.id}" stroke="${layer.color}" fill="none" stroke-width="${strokeMm}" stroke-linecap="round" stroke-linejoin="round">\n`;
-            svg += `    <path d="${strokePathD.trim()}" />\n`;
-            svg += `  </g>\n`;
+      extractedVectorLayers.forEach((layer, idx) => {
+        // 1. Watertight Compound Boolean Difference Fills (C00, C01, C02)
+        if (exportMode === 'fills' || exportMode === 'both') {
+          if (layer.fillLoops && layer.fillLoops.length > 0) {
+            let compoundFillD = '';
+            layer.fillLoops.forEach(it => {
+              compoundFillD += bezierPathD(it.pts, true, isoScale, ox, oy, tH) + ' ';
+            });
+
+            if (compoundFillD.length > 0) {
+              svg += `  <g id="${layer.lbCode}_Fill_${layer.id}">\n`;
+              svg += `    <path d="${compoundFillD.trim()}" fill="${layer.color}" stroke="${layer.color}" stroke-width="0.05" fill-rule="evenodd" />\n`;
+              svg += `  </g>\n`;
+            }
+          }
+        }
+
+        // 2. Continuous Toolpaths (Score / Cut)
+        if (exportMode === 'strokes' || exportMode === 'both') {
+          if (layer.strokeItems && layer.strokeItems.length > 0) {
+            let strokePathD = '';
+            layer.strokeItems.forEach(it => {
+              strokePathD += bezierPathD(it.pts, it.isClosed, isoScale, ox, oy, tH) + ' ';
+            });
+
+            if (strokePathD.length > 0) {
+              // When exporting both, lines receive distinct channels (C03-C05) to avoid cut-palette collisions in LightBurn
+              const lineTag = (exportMode === 'both') ? LINE_CODES[idx % LINE_CODES.length].code : layer.lbCode;
+              const lineCol = (exportMode === 'both') ? LINE_CODES[idx % LINE_CODES.length].col : layer.color;
+
+              svg += `  <g id="${lineTag}_Line_${layer.id}" stroke="${lineCol}" fill="none" stroke-width="${strokeMm}" stroke-linecap="round" stroke-linejoin="round">\n`;
+              svg += `    <path d="${strokePathD.trim()}" />\n`;
+              svg += `  </g>\n`;
+            }
           }
         }
       });
@@ -1242,7 +1746,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `LightBurn-Harmonic-${bedW}x${bedH}mm-${Date.now()}.svg`;
+      a.download = `LightBurn-Diff-${bedW}x${bedH}mm-${Date.now()}.svg`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -1252,6 +1756,9 @@
     document.getElementById('exportSvgBtn').addEventListener('click', exportLightBurnSVG);
     document.getElementById('refreshPlotBtn').addEventListener('click', traceVectorContours);
 
+    // =========================================================================
+    // 5. ANIMATION LOOP & EVENT ATTACHMENTS
+    // =========================================================================
     function render(now) {
       gl.bindFramebuffer(gl.FRAMEBUFFER, writeFBO.fbo);
       gl.viewport(0, 0, simWidth, simHeight);
@@ -1270,7 +1777,10 @@
       gl.uniform2f(gl.getUniformLocation(simProg, 'u_mouse_vel'), mouse.vx, mouse.vy);
       gl.uniform1f(gl.getUniformLocation(simProg, 'u_pressure'), mouse.p);
       gl.uniform1f(gl.getUniformLocation(simProg, 'u_persistence'), 0.995);
+
+      gl.uniform1f(gl.getUniformLocation(simProg, 'u_influence_mode'), parseFloat(document.getElementById('sl-influence-mode').value));
       gl.uniform1f(gl.getUniformLocation(simProg, 'u_touch_force'), parseFloat(document.getElementById('sl-touch-force').value));
+      gl.uniform1f(gl.getUniformLocation(simProg, 'u_ripple_freq'), parseFloat(document.getElementById('sl-ripple-freq').value));
       gl.uniform1f(gl.getUniformLocation(simProg, 'u_time'), now * 0.001);
 
       gl.uniform1f(gl.getUniformLocation(simProg, 'u_k_segs'), parseFloat(document.getElementById('sl-k-segs').value));
@@ -1296,11 +1806,12 @@
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_time'), now * 0.001);
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_shader_type'), parseFloat(document.getElementById('engineSelect').value));
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_scale'), parseFloat(document.getElementById('sl-scale').value));
-      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_harmonics'), parseFloat(document.getElementById('sl-harmonics').value));
-      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_mod_depth'), parseFloat(document.getElementById('sl-mod-depth').value));
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_warp_scale'), parseFloat(document.getElementById('sl-warp').value));
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_flow_angle'), (parseFloat(document.getElementById('sl-flow-angle').value) * Math.PI) / 180.0);
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_segs'), parseFloat(document.getElementById('sl-k-segs').value));
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_angle'), (parseFloat(document.getElementById('sl-k-angle').value) * Math.PI) / 180.0);
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_pinch'), parseFloat(document.getElementById('sl-k-pinch').value));
+      gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_zoom'), parseFloat(document.getElementById('sl-k-zoom').value));
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_k_mirror'), parseFloat(document.getElementById('sl-k-mode').value));
       gl.uniform1f(gl.getUniformLocation(dispProg, 'u_encode_16bit'), 0.0);
 
@@ -1312,19 +1823,21 @@
     requestAnimationFrame(render);
 
     const binds = [
-      { id: 'sl-harmonics',    disp: 'harmonics-num',   fn: v => parseFloat(v).toFixed(2) },
-      { id: 'sl-mod-depth',    disp: 'mod-depth-num',   fn: v => parseFloat(v).toFixed(2) },
-      { id: 'sl-scale',        disp: 'scale-num',       fn: v => parseFloat(v) < 0.5 ? `${parseFloat(v).toFixed(2)} (Wide Wavelength)` : `${parseFloat(v).toFixed(2)}` },
-      { id: 'sl-flow-angle',   disp: 'flow-angle-num',  fn: v => `${v}°` },
+      { id: 'sl-touch-force',  disp: 'touch-force-num', fn: v => `${parseFloat(v).toFixed(2)}x` },
+      { id: 'sl-ripple-freq',  disp: 'ripple-freq-num', fn: v => `${parseFloat(v).toFixed(1)}` },
       { id: 'sl-wave-amp',     disp: 'wave-amp-num',    fn: v => `${parseFloat(v).toFixed(1)} mm` },
       { id: 'sl-wave-angle',   disp: 'wave-angle-num',  fn: v => `${v}°` },
-      { id: 'sl-density',      disp: 'density-num',     fn: v => `${v} Lines` },
+      { id: 'sl-scale',        disp: 'scale-num',       fn: v => parseFloat(v).toFixed(2) },
       { id: 'sl-smoothness',   disp: 'smooth-num',      fn: v => `${v} Passes` },
+      { id: 'sl-density',      disp: 'density-num',     fn: v => `${v} Strata` },
       { id: 'sl-stroke-width', disp: 'width-num',       fn: v => `${parseFloat(v).toFixed(2)} mm` },
       { id: 'sl-rdp',          disp: 'rdp-num',         fn: v => parseFloat(v).toFixed(2) },
-      { id: 'sl-k-segs',       disp: 'ksegs-num',       fn: v => parseInt(v) === 1 ? '1 (Off - Pure Wave)' : `${v} Petals` },
+      { id: 'sl-warp',         disp: 'warp-num',        fn: v => parseFloat(v).toFixed(2) },
+      { id: 'sl-flow-angle',   disp: 'flow-angle-num',  fn: v => `${v}°` },
+      { id: 'sl-k-segs',       disp: 'ksegs-num',       fn: v => parseInt(v) === 1 ? '1 (Off)' : `${v} Petals` },
       { id: 'sl-k-angle',      disp: 'kangle-num',      fn: v => `${v}°` },
-      { id: 'sl-touch-force',  disp: 'touch-force-num', fn: v => `${parseFloat(v).toFixed(2)}x` }
+      { id: 'sl-k-pinch',      disp: 'kpinch-num',      fn: v => parseFloat(v).toFixed(2) },
+      { id: 'sl-k-zoom',       disp: 'kzoom-num',       fn: v => parseFloat(v).toFixed(2) }
     ];
 
     binds.forEach(b => {
@@ -1340,7 +1853,7 @@
       });
     });
 
-    ['sl-plot-style', 'sl-deflection-center', 'sl-view-mode', 'sl-export-mode', 'sl-bed-size', 'engineSelect', 'sl-k-mode'].forEach(id => {
+    ['sl-fill-boolean', 'sl-influence-mode', 'sl-plot-style', 'sl-deflection-center', 'sl-norm-mode', 'sl-view-mode', 'sl-export-mode', 'sl-bed-size', 'engineSelect', 'sl-k-mode'].forEach(id => {
       document.getElementById(id).addEventListener('change', () => {
         if (id === 'engineSelect') {
           document.getElementById('hud-engine').textContent = document.getElementById('engineSelect').options[document.getElementById('engineSelect').selectedIndex].text.split('.')[1].trim().split('(')[0];
@@ -1348,39 +1861,33 @@
         if (id === 'sl-view-mode') {
           document.getElementById('hud-view').textContent = document.getElementById('sl-view-mode').options[document.getElementById('sl-view-mode').selectedIndex].text.split('(')[0];
         }
+        if (id === 'sl-plot-style') {
+          const isRibbon = document.getElementById('sl-plot-style').value === 'ribbons';
+          document.getElementById('ribbon-controls-panel').style.display = isRibbon ? 'block' : 'none';
+        }
         scheduleVectorTrace();
       });
     });
 
-    function applyPresetValues(eng, harm, depth, scale, amp, dens, petals, angle = 0) {
-      document.getElementById('engineSelect').value = eng;
-      document.getElementById('sl-harmonics').value = harm;
-      document.getElementById('sl-mod-depth').value = depth;
-      document.getElementById('sl-scale').value = scale;
-      document.getElementById('sl-wave-amp').value = amp;
-      document.getElementById('sl-density').value = dens;
-      document.getElementById('sl-k-segs').value = petals;
-      document.getElementById('sl-wave-angle').value = angle;
+    document.getElementById('btn-preset-sweeps').addEventListener('click', () => {
+      document.getElementById('engineSelect').value = '9';
+      document.getElementById('sl-plot-style').value = 'ribbons';
+      document.getElementById('sl-scale').value = '0.28';
+      document.getElementById('sl-wave-amp').value = '75.0';
+      document.getElementById('sl-density').value = '24';
+      document.getElementById('sl-k-segs').value = '1';
+      document.getElementById('sl-warp').value = '0.80';
+      document.getElementById('sl-deflection-center').value = 'bipolar';
+      document.getElementById('sl-smoothness').value = '4';
+      document.getElementById('sl-touch-force').value = '2.2';
 
       binds.forEach(b => {
         const el = document.getElementById(b.id);
         if (el) document.getElementById(b.disp).textContent = b.fn(el.value);
       });
-      document.getElementById('hud-engine').textContent = document.getElementById('engineSelect').options[document.getElementById('engineSelect').selectedIndex].text.split('.')[1].trim().split('(')[0];
+      document.getElementById('hud-engine').textContent = 'Oceanic Swell';
+      document.getElementById('ribbon-controls-panel').style.display = 'block';
       scheduleVectorTrace();
-    }
-
-    document.getElementById('btn-pre-guilloche').addEventListener('click', () => {
-      applyPresetValues('10', '3.0', '1.20', '0.35', '45.0', '24', '1', 0);
-    });
-    document.getElementById('btn-pre-chladni').addEventListener('click', () => {
-      applyPresetValues('11', '2.0', '0.00', '0.30', '55.0', '21', '1', 0);
-    });
-    document.getElementById('btn-pre-fourier').addEventListener('click', () => {
-      applyPresetValues('12', '4.0', '1.50', '0.28', '50.0', '24', '1', 0);
-    });
-    document.getElementById('btn-pre-bessel').addEventListener('click', () => {
-      applyPresetValues('13', '4.0', '1.00', '0.32', '40.0', '27', '1', 0);
     });
 
     const drawer = document.getElementById('drawer');
